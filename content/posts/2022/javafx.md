@@ -160,7 +160,7 @@ tf.setOnKeyPressed(/**/);
 
 After putting everything together, the app should look like this:
 
-![image](javafx/result.png)
+![image](/javafx/result.png)
 
 Congrats, you implemented submitting on enter :)
 
