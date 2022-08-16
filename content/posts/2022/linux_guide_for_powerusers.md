@@ -1,6 +1,6 @@
 ---
 title: Linux guide for power users
-summary: A guide to help you setup your Linux work machine and explain some core concepts
+summary: A guide to help you setup your Linux work machine and configure it for a power users workflow
 author: xnacly
 date: 2022-07-30
 tags: 
