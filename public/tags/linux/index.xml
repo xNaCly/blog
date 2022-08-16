@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>linux on xnacly - blog</title>
+    <link>https://xnacly.github.io/blog/tags/linux/</link>
+    <description>Recent content in linux on xnacly - blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 27 Dec 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://xnacly.github.io/blog/tags/linux/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Getting started with Arch on a Macbook pro 2012 (9,2)</title>
+      <link>https://xnacly.github.io/blog/posts/2021/macbookpro_guide/</link>
+      <pubDate>Mon, 27 Dec 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://xnacly.github.io/blog/posts/2021/macbookpro_guide/</guid>
+      <description>A guide to wifi, touchpad support and more on your macbook pro 2012 using arch</description>
+    </item>
+    
+    <item>
+      <title>Bridge WIFI connection via LAN</title>
+      <link>https://xnacly.github.io/blog/posts/2021/wifi_bridge/</link>
+      <pubDate>Thu, 14 Oct 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://xnacly.github.io/blog/posts/2021/wifi_bridge/</guid>
+      <description>How to bridge a WIFI connection to LAN</description>
+    </item>
+    
+  </channel>
+</rss>
