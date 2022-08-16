@@ -8,7 +8,6 @@ tags:
 - i3wm
 - guide
 draft: true
-showToc: true
 ---
 
 ## What to expect
@@ -217,7 +216,7 @@ Wikipedia defines a power user as:
 
 I however would also mention the power users desire to get work done quickly and not have his workflow interrupted. 
 
-This can be done by making use of a window manager such as i3\[-gaps\] to:
+This can be done by making use of a window manager such as [i3\[-gaps\]](https://i3wm.org/) to:
 - tile windows
 - use workspaces
 - auto start applications
@@ -247,6 +246,5 @@ Application overview:
 
 My configuration is public and can be accessed [here](https://github.com/xNaCly/dotfiles)
 
-[^foss]: https://en.wikipedia.org/wiki/Free_and_open-source_software
 [^rolling_release]: https://en.wikipedia.org/wiki/Rolling_release
 [^gnu/linux_controversy]: https://en.wikipedia.org/wiki/GNU/Linux_naming_controversy
