@@ -4,8 +4,9 @@ summary: reasons for migrating your blog to hugo
 date: 2022-08-16
 author: xnacly
 tags:
-- js blog markdown
-draft: true
+- js 
+- blog 
+- md
 ---
 
 > **DISCLAIMER**
