@@ -2,6 +2,7 @@ baseURL: https://xnacly.github.io/blog
 languageCode: en-us
 title: 'xnacly - blog'
 theme: mini
+canonifyURLs: true
 
 social:
  github: https://github.com/xnacly
