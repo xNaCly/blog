@@ -1,0 +1,18 @@
+baseURL: http://example.com
+languageCode: en-us
+title: 'xnacly - blog'
+theme: mini
+
+social:
+ github: https://github.com/xnacly
+
+params:
+  author: xnacly
+  bio: Fullstack Developer and Tech enthusiast
+  showPowerBy: false
+  copyright: ' '
+  showToc: true
+
+  links:
+    - name: Portfolio
+      path: https://xnacly.vercel.app
