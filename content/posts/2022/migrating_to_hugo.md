@@ -23,7 +23,7 @@ Its easy to implement a blog using nc with so many features such as automaticall
 
 However: 
 ## Why i don't use it anymore
-My portfolio was written back when vue version 2 was the latest iteration, therfore i am 
+My portfolio was written back when vue version 2 was the latest iteration, therefore i wanted to migrate to vue3 and nuxt 2. While doing so i had a lot of issues and at the end decided to not give a damn and just use a different solution.
 
 ### Dependency and Vulnerability hell
 Installing nc, even the newest release, installs 1500 packages, several of them deprecated and around 20 vulnerabilities:
