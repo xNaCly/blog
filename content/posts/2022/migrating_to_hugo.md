@@ -14,7 +14,7 @@ tags:
 > I used nuxt content with vue 2, some of these points do not apply to nuxt content v2 with vue 3
 
 ## Why i used nuxt content (nc)
-Nc is a plugin for nuxt which parses several file types and displays their contents in html.[^1]
+Nc is a nuxt module which parses several file types and displays their contents in html.[^1]
 I used nc to display my blog articles in my portfolio by letting it parse my markdown into html.
 
 Don't get me wrong, nc is amazing. 
