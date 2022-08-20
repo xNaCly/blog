@@ -1,19 +1,29 @@
 baseURL: https://xnacly.github.io/blog
 languageCode: en-us
-title: 'xnacly - blog'
+title: "xnacly - blog"
 theme: mini
 canonifyURLs: true
+paginate: 3
 
 social:
- github: https://github.com/xnacly
+    github: https://github.com/xnacly
+
+markup:
+    highlight:
+        style: dracula
+    tableOfContents:
+        endLevel: 6
+        ordered: false
+        startLevel: 2
 
 params:
-  author: xnacly
-  bio: Fullstack Developer and Tech enthusiast
-  showPowerBy: false
-  copyright: ' '
-  showToc: true
+    author: xnacly
+    bio: Fullstack Developer and Tech enthusiast
+    showPowerBy: false
+    copyright: " "
+    showToc: true
+    enableRSS: true
 
-  links:
-    - name: Portfolio
-      path: https://xnacly.vercel.app
+    links:
+        - name: Portfolio
+          path: https://xnacly.vercel.app

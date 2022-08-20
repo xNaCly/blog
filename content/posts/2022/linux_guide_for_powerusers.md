@@ -3,21 +3,23 @@ title: Linux guide for power users
 summary: A guide to help you setup your Linux work machine and configure it for a power users workflow
 author: xnacly
 date: 2022-07-30
-tags: 
-- linux
-- i3wm
-- guide
+tags:
+    - linux
+    - i3wm
+    - guide
 draft: true
 ---
 
 ## What to expect
 
 This guide is meant as a loose inspiration for a poweruser looking to switch to Linux. It showcases:
-- window manager, terminal, i3blocks, i3status, nvim, wallpapers and dunst configuration
-- basic package manager usage 
-- some information about everything you need to know to really configure a power users system.
 
-If you already know how to install Linux skip [Installing](#installing-a-distro) and go straight to [What do we need, how do we get it](#what-do-we-need-how-do-we-get-it)
+-   window manager, terminal, i3blocks, i3status, nvim, wallpapers and dunst configuration
+-   basic package manager usage
+-   some information about everything you need to know to really configure a power users system.
+
+If you already know how to install Linux skip [Installing](#installing-a-distro) and go straight to
+[What do we need, how do we get it](#what-do-we-need-how-do-we-get-it)
 
 ## Getting started with the Lingo (What is all this stuff)
 
@@ -28,7 +30,7 @@ Linux is the kernel of your distro, written in C and Assembly by Linus Torvalds 
 The kernel manages most of your installed drivers, allocates your resources and generally acts as an interface between
 soft- and hardware.
 
-![kernel\_hardware](https://upload.wikimedia.org/wikipedia/commons/3/3a/linux_kernel_ubiquity.svg)
+![kernel_hardware](https://upload.wikimedia.org/wikipedia/commons/3/3a/linux_kernel_ubiquity.svg)
 
 The `+-/Gnu` in the heading is a reference to the Linux kernel using GNU code and extensions, and therefore some people
 think the Linux kernel should be named with the post-fix `/Gnu` or `+Gnu`.[^gnu/linux_controversy]
@@ -61,7 +63,7 @@ No one really knows how many distros there
 [are](https://upload.wikimedia.org/wikipedia/commons/b/b5//linux_Distribution_Timeline_21_10_2021.svg), because everyone
 can make one and switching between them is very easy.
 
-### Package manager
+#### Package manager
 
 A package manager is a tool which installes, removes and updates software for you. No more going to a random website and
 downloading an `\*.exe` file only to have your hdd bricked after disabling the antivirus and running the totally
@@ -92,7 +94,7 @@ sudo pacman -R neovim
 In this tutorial we will use [Manjaro](https://manjaro.org/), therefore you can focus on the package manager included in
 the distribution: `pacman`.
 
-### Desktop environment (DE) vs window manager (WM)
+#### Desktop environment (DE) vs window manager (WM)
 
 A desktop environment such as [GNOME](https://www.gnome.org/) bundles a file manager, terminal, window manager, settings
 and more into the GNOME package. Everything in it is tightly integrated and applications in the bundle often look
@@ -204,47 +206,76 @@ with the following attributes (you will be asked for these in the next few windo
 
 ## What do we need, how do we get it?
 
-Wikipedia defines a power user as: 
+Wikipedia defines a power user as:
 
-> a user of computers, software and other electronic devices, 
-> who uses advanced features of computer hardware, operating systems, programs, 
-> or websites which are not used by the average user. 
-> 
-> A power user might not have extensive technical knowledge of the systems they use but is rather 
-> characterized by competence or desire to make the most intensive use of 
-> computer programs or systems.
+> a user of computers, software and other electronic devices, who uses advanced features of computer hardware, operating
+> systems, programs, or websites which are not used by the average user.
+>
+> A power user might not have extensive technical knowledge of the systems they use but is rather characterized by
+> competence or desire to make the most intensive use of computer programs or systems.
 
-I however would also mention the power users desire to get work done quickly and not have his workflow interrupted. 
+I however would also mention the power users desire to get work done quickly and not have his workflow interrupted.
 
 This can be done by making use of a window manager such as [i3\[-gaps\]](https://i3wm.org/) to:
-- tile windows
-- use workspaces
-- auto start applications
-- automatically move applications on start to a workspace
-- have a fancy bar on one border of the screen
-- manage your windows solely via keyboard shortcuts you configure
-- have a cool [r/unixporn](https://reddit.com/r/unixporn) setup
 
-The downside of most window manager setups is the need to configure every feature you would get by using a desktop environment yourself, such as volume, wifi and wallpaper management. But don't worry i got you covered on that full system configuration.
+-   tile windows
+-   use workspaces
+-   auto start applications
+-   automatically move applications on start to a workspace
+-   have a fancy bar on one border of the screen
+-   manage your windows solely via keyboard shortcuts you configure
+-   have a cool [r/unixporn](https://reddit.com/r/unixporn) setup
 
-Application overview:
+The downside of most window manager setups is the need to configure every feature you would get by using a desktop
+environment yourself, such as volume, wifi and wallpaper management. But don't worry i got you covered on that full
+system configuration.
 
-- Notification daemon: dunst (lightweight and configurable)
-- Window manager: i3-gaps (i3 fork with gaps)
-- File explorer: Nautilus
-- Shell: fish (very nice autocompletion and prompts)
-- Terminal Emulator: kitty (i like the name and i need font ligatures for my neovim setup)
-- Editor: Neovim (its the new and improved new and improved vi)
-- Wallpaper setter: nitrogen (its minimal)
-- Compositor: Picom (rounded borders and transparency)
+### Application overview
 
-## Configuring your system
+-   Notification daemon: dunst (lightweight and configurable)
+-   Window manager: i3-gaps (i3 fork with gaps)
+-   File explorer: Nautilus
+-   Shell: fish (very nice autocompletion and prompts)
+-   Terminal Emulator: kitty (i like the name and i need font ligatures for my neovim setup)
+-   Editor: Neovim (its the new and improved new and improved vi)
+-   Wallpaper setter: nitrogen (its minimal)
+-   Compositor: Picom (rounded borders and transparency)
 
-### Filesystem
+## Getting Started
 
-### Dot(.) files
+### Installing software
+
+#### Understanding `pacman`
+
+Pacman has a not so beginner friendly interface (it uses flags such as `-S` instead of `install` or `add`), i will
+therefore now follow with a simplified guide for pacman.
+
+> Always consult the man pages[^pacman@manpage] or the wiki[^pacman@archwiki] for more info Pacman is very easy to use
+> for simple and complex tasks. It's flags are consistent and if you really think about it they make a lot of sense, it
+> is also a lot simpler than apt, like I contrasted in [Package manager](#package-manager).
+
+##### `pacman` usage
+
+```bash
+# install a package
+pacman -S firefox
+# remove a package
+pacman -R firefox
+# search a package
+pacman -Ss firefox
+# full system upgrade
+pacman -Syyu
+```
+
+#### Manage software
+
+### Understanding filesystem basics
+
+#### Dot(.) files
 
 My configuration is public and can be accessed [here](https://github.com/xNaCly/dotfiles)
 
 [^rolling_release]: https://en.wikipedia.org/wiki/Rolling_release
 [^gnu/linux_controversy]: https://en.wikipedia.org/wiki/GNU/Linux_naming_controversy
+[^pacman@manpage]: https://archlinux.org/pacman/pacman.8.html
+[^pacman@archwiki]: https://wiki.archlinux.org/title/pacman#Usage
