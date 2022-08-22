@@ -1,9 +1,9 @@
 baseURL: https://xnacly.github.io/blog
 languageCode: en-us
 title: "xnacly - blog"
-theme: mini
+theme: xnacly
 canonifyURLs: true
-paginate: 3
+paginate: 6
 
 social:
     github: https://github.com/xnacly
@@ -19,10 +19,12 @@ markup:
 params:
     author: xnacly
     bio: Fullstack Developer and Tech enthusiast
+    description: A blog all around tech, programming and whatever im currently interested in
     showPowerBy: false
     copyright: " "
     showToc: true
     enableRSS: true
+    hiddenPostSummaryInHomePage: true
 
     links:
         - name: Portfolio

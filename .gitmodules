@@ -1,3 +1,3 @@
-[submodule "themes/mini"]
-	path = themes/mini
-	url = https://github.com/xnacly/hugo-theme-mini.git
+[submodule "themes/xnacly"]
+	path = themes/xnacly
+	url = https://github.com/xnacly/hugo-theme-mini
