@@ -14,7 +14,7 @@ draft: true
 
 This guide is meant as a loose inspiration for a poweruser looking to switch to Linux. It showcases:
 
--   window manager, terminal, i3blocks, i3status, nvim, wallpapers and dunst configuration
+-   window manager, terminal, i3status, nvim, wallpapers and dunst configuration
 -   basic package manager usage
 -   some information about everything you need to know to really configure a power users system.
 
@@ -267,11 +267,176 @@ pacman -Ss firefox
 pacman -Syyu
 ```
 
-#### Manage software
+## Configuring your system
 
-### Understanding filesystem basics
+### .files
 
-#### Dot(.) files
+
+### Neovim
+To get started we need to get our hands on a powerful editor, such as vim or the new and improved vim: neovim.
+
+Neovim is useful with its defaults, but a minimal config can help to get the most out of it.
+
+Open a new terminal, paste the following:
+
+```sh
+# install the neovim package using pacman as the superuser 
+sudo pacman -S neovim
+# (c)hange (d)irectory to the user config which can be found at ~/.config
+cd ~/.config 
+# (m)a(k)e a new (dir)ectory named nvim
+mkdir nvim
+# create a new file named init.vim in the ~/.config/nvim folder
+nvim nvim/init.vim
+```
+
+now you should see neovim's interface.:
+![vim_config](/linux/vim_config.png)
+
+press `i` to switch to insert mode and paste the following configuration `ctrl+shift+v`:
+
+
+```vim
+set number								" enable line numbers 
+set hidden 								" hide buffers
+syntax on                               " Enables syntax highlighing
+set nowrap                              " Display long lines as just one line
+set encoding=utf-8                      " The encoding displayed
+set fileencoding=utf-8                  " The encoding written to file
+set ruler								" Show the cursor position all the time
+set cmdheight=2                         " More space for displaying messages
+set iskeyword+=-                      	" treat dash separated words as a word text object
+set splitbelow                          " Horizontal splits will automatically be below
+set splitright                          " Vertical splits will automatically be to the right
+set t_Co=256                            " Support 256 colors
+set conceallevel=0                      " So that I can see `` in markdown files
+set tabstop=4                           " Insert 2 spaces for a tab
+set shiftwidth=4                        " Change the number of space characters inserted for indentation
+set smarttab                            " Makes tabbing smarter will realize you have 2 vs 4
+set expandtab                           " Converts tabs to spaces
+set smartindent                         " Makes indenting smart
+set autoindent                          " Good auto indent
+set showtabline=2                       " Always show tabs
+set noshowmode                          " We don't need to see things like -- INSERT -- anymore
+set updatetime=300                      " Faster completion
+set timeoutlen=500                      " By default timeoutlen is 1000 ms
+set formatoptions-=cro                  " Stop newline continution of comments
+set termguicolors						" allow vim to change term colors
+set incsearch 							" enable incremental search
+set smartcase							" searches case insensitive until an uppercase character is supplied
+set nobackup							" disables backup files
+set spell!								" spellchecking
+set spelllang=en,de						" set languages for spellchecking
+```
+
+Now hit `Esc` and type `:source %` to reload the neovim configuration
+
+> **Escaping vim**
+>
+> there are several ways to exit vim:
+| Method | What happens |
+| ----------- | ------------ |
+| `:q!` or `ZQ`	      | exit and discard |
+| `:w` or `ZZ`	      | exit and save    |
+
+
+### i3
+To display anything and manage our windows, we will need the i3gaps group:
+
+```bash
+sudo pacman -S i3 dmenu
+```
+
+Input your password and hit `Enter`
+
+```text
+[sudo] password for teo: 
+:: There are 5 members in group i3:
+:: Repository community
+   1) i3-gaps  2) i3-wm  3) i3blocks  4) i3lock  5) i3status
+
+Enter a selection (default=all): 
+```
+
+Now logout and select i3:
+![i3_select](/linux/i3_select.png)
+
+After boot you will be prompted to generate a config, hit `Enter`.
+![i3_first_boot](/linux/i3_firstboot.png)
+
+Select the default key as the `Super`-Key, it should be the `Win` button. Hit Enter to write the config.
+![i3_first_config](/linux/i3_firstboot_config.png)
+
+i3 has a pretty unique keymap, here some basics:
+
+| Keycombination  | what it does         |
+| :-------------: | :-----------------:  |
+| `Super+Enter`   | open a terminal      |
+| `Super+Shift+q` | close a window       |
+| `Super+d` | start application launcher |
+| `Super+Shift+c` | reload i3 config     |
+| `Super+Shift+r` | reload i3            |
+| `Super+[0-9]`   | switch to workspace 1-10 |
+| `Super+Shift+[0-9]`   | move focused window to workspace 1-10 |
+
+See the [i3 docs](https://i3wm.org/docs/userguide.html) for keybindings and configuration  help, also see my [i3 config](https://github.com/xNaCly/dotfiles/blob/master/i3/config) for inspiration. 
+
+### i3status
+i3status is very easily configurable. 
+
+```bash
+# (c)hange (d)irectory to the user config which can be found at ~/.config
+cd ~/.config 
+# (m)a(k)e a new (dir)ectory named i3status
+mkdir i3status
+# open the config in neovim
+nvim i3status/i3status.conf
+```
+
+Now in neovim, paste the following:
+
+```text
+general {
+        interval = 1
+}
+
+order += "volume master"
+order += "tztime local"
+
+tztime local {
+        format = "%d.%m %H:%M "
+}
+
+volume master {
+        format = "%volume"
+        format_muted = "--%"
+        device = "pulse"
+}
+```
+
+This config updates every 1 second and only displays the time, date and volume.
+To apply this configuration, we will need to change the configuration file i3status looks at. To do this, we need to change the following in `~/.config/i3/config` 
+
+![i3status_old](/linux/i3status_old.png)
+
+```text
+184 bar {
+185 	status_command i3status
+186 }
+```
+
+to
+
+![i3status_new](/linux/i3status_new.png)
+```text
+184 bar {
+185 	status_command i3status -c ~/.config/i3status/i3status.conf
+186 }
+```
+
+
+### Dunst
+### Wallpaper
 
 My configuration is public and can be accessed [here](https://github.com/xNaCly/dotfiles)
 
