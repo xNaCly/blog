@@ -5,9 +5,6 @@ theme: xnacly
 canonifyURLs: true
 paginate: 6
 
-social:
-    github: https://github.com/xnacly
-
 markup:
     highlight:
         style: dracula
@@ -25,7 +22,3 @@ params:
     showToc: true
     enableRSS: true
     hiddenPostSummaryInHomePage: true
-
-    links:
-        - name: Portfolio
-          path: https://xnacly.vercel.app
