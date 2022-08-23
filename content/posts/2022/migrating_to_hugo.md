@@ -61,6 +61,9 @@ and providing me with a github action, which allows me to edit a markdown file, 
 
 Here is the source for this blog: https://github.com/xNaCly/blog
 
+## [UPDATE: 2022-08-23]
+I now have deprecated my portfolio and moved everything to hugo. As one can see my skill set and a short biography are displayed at [~/about](/about). I also created my own [theme](https://github.com/xnacly/hugo-theme-mini) by forking the [hugo-mini-theme](https://github.com/nodejh/hugo-theme-mini) and changing it to my liking. I implemented dark and light theme support depending on the system preference, as well as better responsiveness. I am currently thinking about merging my changes into upstream, but thats a whole other story.
+
 [^1]: https://content.nuxtjs.org/
 [^2]: https://content.nuxtjs.org/v1/getting-started/introduction
 [^3]: https://content.nuxtjs.org/v1/community/integrations
