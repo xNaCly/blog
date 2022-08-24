@@ -23,7 +23,7 @@ If you already know how to install Linux skip [Installing](#installing-a-distro)
 
 ## Getting started with the Lingo (What is all this stuff)
 
-### Linux (+-/GNU)
+### Linux `(+-/GNU)`
 
 Linux is the kernel of your distro, written in C and Assembly by Linus Torvalds and thousands of contributors.
 
@@ -271,6 +271,43 @@ pacman -Syyu
 
 ### .files
 
+Dotfiles are files starting with a `.`. These files are hidden by default and can be viewed using the `-a` flag for ls:
+
+```bash
+$: pwd
+/home/teo
+
+# (l)i(s)t directory content 
+#   [-l: long listing format]
+$: ls -l
+total 0
+drwxr-xr-x 1 teo teo 4096 Aug 24 09:29 Documents
+
+# (l)i(s)t directory content 
+#   [-l: long listing format, -a: list all files (includes hidden)]
+$: ls -la 
+total 16
+drwxr-x--- 1 teo  teo  4096 Aug 24 09:29 .
+drwxr-xr-x 1 root root 4096 Aug  5 09:15 ..
+-rw------- 1 teo  teo   409 Aug 23 14:31 .bash_history
+-rw-r--r-- 1 teo  teo   220 Aug  5 09:15 .bash_logout
+-rw-r--r-- 1 teo  teo  3771 Aug  5 09:15 .bashrc
+drwxr-xr-x 1 teo  teo  4096 Aug  5 09:15 .landscape
+-rw-r--r-- 1 teo  teo     0 Aug 24 09:29 .motd_shown
+-rw-r--r-- 1 teo  teo   807 Aug  5 09:15 .profile
+-rw-r--r-- 1 teo  teo     0 Aug  5 09:15 .sudo_as_admin_successful
+-rw------- 1 teo  teo  2361 Aug  5 11:26 .viminfo
+drwxr-xr-x 1 teo  teo  4096 Aug 24 09:29 Documents
+```
+
+In the above one can directly see a config file such as `.bashrc`. This file for instance contains all the configuration for bash, as the name suggests.
+
+> **Freedesktop.org: XDG basedir specs** 
+> 
+>  *`$XDG_CONFIG_HOME` defines the base directory relative to which user-specific configuration files should be stored. 
+>  If `$XDG_CONFIG_HOME` is either not set or empty, a default equal to `$HOME/.config` should be used.* [^file_system_standard]
+
+Config files are often stored in files prefixed by a `.`, or in the `.config` directory, therefore they are called dotfiles..
 
 ### Neovim
 To get started we need to get our hands on a powerful editor, such as vim or the new and improved vim: neovim.
@@ -293,7 +330,7 @@ nvim nvim/init.vim
 now you should see neovim's interface.:
 ![vim_config](/linux/vim_config.png)
 
-press `i` to switch to insert mode and paste the following configuration `ctrl+shift+v`:
+press `i` to switch to insert mode and paste the following configuration using `ctrl+shift+v`:
 
 
 ```vim
@@ -336,8 +373,8 @@ Now hit `Esc` and type `:source %` to reload the neovim configuration
 > there are several ways to exit vim:
 | Method | What happens |
 | ----------- | ------------ |
-| `:q!` or `ZQ`	      | exit and discard |
-| `:w` or `ZZ`	      | exit and save    |
+| `Esc:q!` or `ZQ`	      | exit and discard |
+| `Esc:w` or `ZZ`	      | exit and save    |
 
 
 ### i3
@@ -346,9 +383,6 @@ To display anything and manage our windows, we will need the i3gaps group:
 ```bash
 sudo pacman -S i3 dmenu
 ```
-
-Input your password and hit `Enter`
-
 ```text
 [sudo] password for teo: 
 :: There are 5 members in group i3:
@@ -357,6 +391,9 @@ Input your password and hit `Enter`
 
 Enter a selection (default=all): 
 ```
+
+Input your password and hit `Enter`.
+
 
 Now logout and select i3:
 ![i3_select](/linux/i3_select.png)
@@ -367,7 +404,7 @@ After boot you will be prompted to generate a config, hit `Enter`.
 Select the default key as the `Super`-Key, it should be the `Win` button. Hit Enter to write the config.
 ![i3_first_config](/linux/i3_firstboot_config.png)
 
-i3 has a pretty unique keymap, here some basics:
+i3 has a pretty unique keymap, here are the most basics ones:
 
 | Keycombination  | what it does         |
 | :-------------: | :-----------------:  |
@@ -415,7 +452,11 @@ volume master {
 ```
 
 This config updates every 1 second and only displays the time, date and volume.
-To apply this configuration, we will need to change the configuration file i3status looks at. To do this, we need to change the following in `~/.config/i3/config` 
+To apply this configuration, we will need to change the configuration file i3status looks at. To do this, we need to change the following in `~/.config/i3/config` by supplying the file path to neovim, like so:
+
+```bash
+nvim ~/.config/i3/config
+```
 
 ![i3status_old](/linux/i3status_old.png)
 
@@ -435,6 +476,7 @@ to
 ```
 
 
+
 ### Dunst
 ### Wallpaper
 
@@ -444,3 +486,4 @@ My configuration is public and can be accessed [here](https://github.com/xNaCly/
 [^gnu/linux_controversy]: https://en.wikipedia.org/wiki/GNU/Linux_naming_controversy
 [^pacman@manpage]: https://archlinux.org/pacman/pacman.8.html
 [^pacman@archwiki]: https://wiki.archlinux.org/title/pacman#Usage
+[^file_system_standard]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
