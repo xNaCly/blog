@@ -8,6 +8,8 @@ paginate: 6
 markup:
     highlight:
         style: dracula
+        lineNos: true
+        lineNumbersInTable: false
     tableOfContents:
         endLevel: 6
         ordered: false
