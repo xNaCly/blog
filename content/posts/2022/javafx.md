@@ -64,7 +64,7 @@ public class Demo extends Application {
 
 Your Application should now look like this:
 
-![image](/javafx/javafxdemo.png)
+![image](/javafx/javafxdemo.webp)
 
 The next move is to implement our custom event which will fire on pressing `Enter`:
 
@@ -160,7 +160,7 @@ tf.setOnKeyPressed(/**/);
 
 After putting everything together, the app should look like this:
 
-![image](/javafx/result.png)
+![image](/javafx/result.webp)
 
 Congrats, you implemented submitting on enter :)
 

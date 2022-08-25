@@ -33,7 +33,7 @@ Linux is the kernel of your distro, written in C and Assembly by Linus Torvalds 
 The kernel manages most of your installed drivers, allocates your resources and generally acts as an interface between
 soft- and hardware.
 
-![kernel_hardware](/linux/linux_kernel.png)
+![kernel_hardware](/linux/linux_kernel.webp)
 
 The `+-/Gnu` in the heading is a reference to the Linux kernel using GNU code and extensions, and therefore some people
 think the Linux kernel should be named with the post-fix `/Gnu` or `+Gnu`.[^gnu/linux_controversy]
@@ -333,7 +333,7 @@ nvim nvim/init.vim
 ```
 
 now you should see neovim's interface.:
-![vim_config](/linux/vim_config.png)
+![vim_config](/linux/vim_config.webp)
 
 press `i` to switch to insert mode and paste the following configuration using `ctrl+shift+v`:
 
@@ -438,10 +438,10 @@ To view available shortcuts for the `NerdTree` press `ctrl+b` to toggle the tree
 ##### Screenshots
 
 ###### Fzf
-![fzf](/linux/fzf.png)
+![fzf](/linux/fzf.webp)
 
 ###### NerdTree
-![nerdtree](/linux/nerdtree_and_vim.png)
+![nerdtree](/linux/nerdtree_and_vim.webp)
 
 ### Fish (Shell)
 
@@ -540,13 +540,13 @@ Input your password and hit `Enter`.
 
 
 Now logout and select i3:
-![i3_select](/linux/i3_select.png)
+![i3_select](/linux/i3_select.webp)
 
 After boot you will be prompted to generate a config, hit `Enter`.
-![i3_first_boot](/linux/i3_firstboot.png)
+![i3_first_boot](/linux/i3_firstboot.webp)
 
 Select the default key as the `Super`-Key, it should be the `Win` button. Hit Enter to write the config.
-![i3_first_config](/linux/i3_firstboot_config.png)
+![i3_first_config](/linux/i3_firstboot_config.webp)
 
 i3 has a pretty unique keymap, here are the most basics ones:
 
@@ -603,7 +603,7 @@ To apply this configuration, we will need to change the configuration file i3sta
 nvim ~/.config/i3/config
 ```
 
-![i3status_old](/linux/i3status_old.png)
+![i3status_old](/linux/i3status_old.webp)
 
 ```text {linenostart=184,hl_lines=[2]}
 bar {
@@ -613,7 +613,7 @@ bar {
 
 to
 
-![i3status_new](/linux/i3status_new.png)
+![i3status_new](/linux/i3status_new.webp)
 ```text {linenostart=184,hl_lines=[2]}
 bar {
 	status_command i3status -c ~/.config/i3status/i3status.conf
@@ -681,7 +681,7 @@ bindsym $mod+Shift+q kill
 Gnome ships a cli utility which we will use to test our notification daemon. Running `notify-send "test"` on our current system results in an `GDBus` error.
 To fix this we will have to install [dunst](https://wiki.archlinux.org/title/Dunst).:
 
-![dbus_error](/linux/dbus_error.png)
+![dbus_error](/linux/dbus_error.webp)
 
 ```bash
 sudo pacman -S dunst
@@ -689,7 +689,7 @@ sudo pacman -S dunst
 
 Sending a new notification will now result in a small window popping up on our screen for a few seconds:
 
-![dunst](/linux/dunst.png)
+![dunst](/linux/dunst.webp)
 
 ### Nitrogen (Wallpaper setter)
 Setting a Wallpaper is easier than all the technical incompetent people on [r/PcMasterRace](https://www.reddit.com/r/pcmasterrace/) say. Just install `nitrogen`, add your picture, done.
@@ -699,11 +699,11 @@ sudo pacman -S nitrogen
 ```
 1. Download an image to the `~/Pictures` directory
 2. Add the `~/Pictures` directory as a source to nitrogen
-![nitrogen_walktrough](/linux/nitrogen_walktrough.png)
+![nitrogen_walktrough](/linux/nitrogen_walktrough.webp)
 3. Click on the now added image (1), select the prefered alignment option (2) and click `apply` (3)
-![nitrogen_after_selection](/linux/nitrogen_after_selection.png)
+![nitrogen_after_selection](/linux/nitrogen_after_selection.webp)
 4. Done.
-![wallpaper_applied](/linux/wallpaper_applied.png)
+![wallpaper_applied](/linux/wallpaper_applied.webp)
 
 > **Warning**
 >
@@ -748,9 +748,9 @@ I appended some Screenshots to visualise the result of this guide.
 
 ### Screenshots
 
-![screenshot](/linux/screenshot.png)
-![c workflow](/linux/c_workflow_tree.png)
-![c_workflow2](/linux/c_workflow.png)
+![screenshot](/linux/screenshot.webp)
+![c workflow](/linux/c_workflow_tree.webp)
+![c_workflow2](/linux/c_workflow.webp)
 
 [^rolling_release]: https://en.wikipedia.org/wiki/Rolling_release
 [^gnu/linux_controversy]: https://en.wikipedia.org/wiki/GNU/Linux_naming_controversy

@@ -28,7 +28,7 @@ My portfolio was written back when vue version 2 was the latest iteration, there
 ### Dependency and Vulnerability hell
 Installing nc, even the newest release, installs 1500 packages, several of them deprecated and around 20 vulnerabilities:
 
-![installing_nuxt_content](/migrating_to_hugo/installing_nuxt.png)
+![installing_nuxt_content](/migrating_to_hugo/installing_nuxt.webp)
 
 ### Missing features
 Out of the box nc is lacking a lot of features, such as generating a rss feed for all blog posts, code syntax highlighting and other.[^2]

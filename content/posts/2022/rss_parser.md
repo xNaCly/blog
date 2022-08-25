@@ -47,7 +47,7 @@ Take for example the following XML:
     <pubDate>Mon, 18 Jul 2022 10:06:46 +0000</pubDate>
     <image>
       <title>NYT &gt; Top Stories</title>
-      <url>https://static01.nyt.com/images/misc/NYT_logo_rss_250x40.png</url>
+      <url>https://static01.nyt.com/images/misc/NYT_logo_rss_250x40.webp</url>
       <link>https://www.nytimes.com</link>
     </image>
     <item>
@@ -98,7 +98,7 @@ should present the data in JSON as follows:
 	"pubDate": "Mon, 18 Jul 2022 10:06:46 +0000",
 	"image": {
 		"title": "NYT &gt; Top Stories",
-		"url": "https://static01.nyt.com/images/misc/NYT_logo_rss_250x40.png",
+		"url": "https://static01.nyt.com/images/misc/NYT_logo_rss_250x40.webp",
 		"link": "https://www.nytimes.com"
 	}
 }
@@ -287,7 +287,7 @@ If you run this you will notice some issues...
   "copyright": "Copyright 2022 The New York Times Company",
   "lastBuildDate": "Mon, 18 Jul 2022 10:28:54 +0000",
   "pubDate": "Sun, 17 Jul 2022 19:45:54 +0000",
-  "url": "https://static01.nyt.com/images/misc/NYT_logo_rss_250x40.png",
+  "url": "https://static01.nyt.com/images/misc/NYT_logo_rss_250x40.webp",
   "guid": "https://www.nytimes.com/2022/07/17/arts/design/rome-museum-recovered-treasures.html",
   "description": "The Museum of Rescued Art showcases antiquities that were looted or otherwise lost before they go back to institutions in the regions from which they were taken.",
   "dc:creator": "Elisabetta Povoledo",
@@ -376,7 +376,7 @@ parse_rss("https://www.spiegel.de/schlagzeilen/tops/index.rss").then((_) => {
 	"image": {
 		"title": "DER SPIEGEL",
 		"link": "https://www.spiegel.de/",
-		"url": "https://www.spiegel.de/public/spon/images/logos/der-spiegel-h60.png"
+		"url": "https://www.spiegel.de/public/spon/images/logos/der-spiegel-h60.webp"
 	}
 }
 ```
