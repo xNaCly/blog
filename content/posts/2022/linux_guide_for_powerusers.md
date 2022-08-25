@@ -6,7 +6,6 @@ date: 2022-08-23
 tags:
     - linux
     - guide
-draft: true
 ---
 
 ## What to expect
