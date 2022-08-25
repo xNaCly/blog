@@ -20,6 +20,10 @@ This guide is meant as a loose inspiration for a poweruser looking to switch to 
 If you already know how to install Linux skip [Installing](#installing-a-distro) and go straight to
 [What do we need, how do we get it](#what-do-we-need-how-do-we-get-it)
 
+If you want to see Screenshots of the results click [here](#screenshots-1).
+
+If you want to take a look at my dofiles, they are [here](https://github.com/xnacly/dotfiles)
+
 ## Getting started with the Lingo (What is all this stuff)
 
 ### Linux `(+-/GNU)`
@@ -29,7 +33,7 @@ Linux is the kernel of your distro, written in C and Assembly by Linus Torvalds 
 The kernel manages most of your installed drivers, allocates your resources and generally acts as an interface between
 soft- and hardware.
 
-![kernel_hardware](https://upload.wikimedia.org/wikipedia/commons/3/3a/linux_kernel_ubiquity.svg)
+![kernel_hardware](/linux/linux_kernel.png)
 
 The `+-/Gnu` in the heading is a reference to the Linux kernel using GNU code and extensions, and therefore some people
 think the Linux kernel should be named with the post-fix `/Gnu` or `+Gnu`.[^gnu/linux_controversy]
@@ -367,7 +371,7 @@ set spell!								" spellchecking
 set spelllang=en,de						" set languages for spellchecking
 ```
 
-Now hit `Esc` and type `:source %` to reload the neovim configuration
+Now hit `Esc` and type  `:w` and after that `:source %` to reload the neovim configuration
 
 > **Escaping vim**
 >
@@ -377,6 +381,67 @@ Now hit `Esc` and type `:source %` to reload the neovim configuration
 | `Esc:q!` or `ZQ`	      | exit and discard |
 | `Esc:w` or `ZZ`	      | exit and save    |
 
+#### Plugins (fuzzy file finder, nerd tree)
+
+
+Add the following to your vim config (`~/.config/nvim/init.vim`) to install vim plug (a package manager for vim).
+
+```vim
+" installs vim plug if it isnt already installed
+if empty(glob('~/.config/nvim/autoload/plug.vim'))
+  silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
+    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+endif
+```
+
+To add plugins to vim we need to do the following:
+
+```vim
+call plug#begin('~/.config/nvim/autoload/plugged')
+    " define fzf as a plugin 
+    Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+
+    " plugins for icons in the file tree
+    Plug 'kyazdani42/nvim-web-devicons'
+    Plug 'ryanoasis/vim-devicons'
+
+    " syntax support for the file tree 
+    Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
+
+    " plugin to display a file tree
+    Plug 'scrooloose/NERDTree'
+
+    " add the closing pair to ("'{[ 
+    Plug 'jiangmiao/auto-pairs'
+call plug#end()
+```
+
+Now:
+1. type in  `:w` and `:source %` to reload the config
+2. type in `:PlugInstall` and exit with `ZZ`
+
+Go back into the vim config and add the following lines to interact with the plugins we just installed.:
+
+```vim
+" this defines space as out custom button to start key combinations such as space+f to fuzzy search
+let mapleader="\<space>" 
+
+" map space+f to the command ':FZF' which starts the fuzzy finder window
+nnoremap <silent> <Leader>f :FZF<CR>
+
+" map ctrl+b to the file tree 
+nnoremap <silent> <C-b> :NERDTreeToggle<CR>
+```
+
+To view available shortcuts for the `NerdTree` press `ctrl+b` to toggle the tree window and press `?` to view help.
+
+##### Screenshots
+
+###### Fzf
+![fzf](/linux/fzf.png)
+
+###### NerdTree
+![nerdtree](/linux/nerdtree_and_vim.png)
 
 ### Fish (Shell)
 
@@ -664,7 +729,28 @@ Your wallpaper will now be restored on boot.
 
 
 ## Wrapping up.
-My configuration is public and can be accessed [here](https://github.com/xNaCly/dotfiles)
+
+After reading through this guide and following each step, you can now:
+- understand the difference between a distro and the kernel 
+- install linux in a virtual machine
+- use a package manager
+- use basic vim 
+- understand the basics of the unix file system
+- use a floating window manager
+- use git to version your files
+- configure software (i3, vim)
+
+If there is anything wrong or you are having questions just create a new issue [here](https://github.com/xnacly/blog/issues/new)
+
+I will some day follow up on this and make a ricing guide, but until now you should be able to evolve your workflows and get comfy using i3. 
+
+I appended some Screenshots to visualise the result of this guide.
+
+### Screenshots
+
+![screenshot](/linux/screenshot.png)
+![c workflow](/linux/c_workflow_tree.png)
+![c_workflow2](/linux/c_workflow.png)
 
 [^rolling_release]: https://en.wikipedia.org/wiki/Rolling_release
 [^gnu/linux_controversy]: https://en.wikipedia.org/wiki/GNU/Linux_naming_controversy
@@ -673,3 +759,4 @@ My configuration is public and can be accessed [here](https://github.com/xNaCly/
 [^file_system_standard]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
 [^git_credentials_store]: https://git-scm.com/docs/git-credential-store
 [^i3docs_exec]: https://i3wm.org/docs/userguide.html#_automatically_starting_applications_on_i3_startup
+[^nitrogen_manpage]: https://www.mankier.com/1/nitrogen
