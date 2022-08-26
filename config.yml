@@ -15,12 +15,15 @@ markup:
         ordered: false
         startLevel: 2
 
+social:
+    github: https://github.com/xnacly
+    rss: https://xnacly.me/index.xml
+
 params:
     author: xnacly
     bio: Fullstack Developer and Tech enthusiast
     description: A blog all around tech, programming and whatever im currently interested in
     showPowerBy: false
-    copyright: " "
     showToc: true
     enableRSS: true
     hiddenPostSummaryInHomePage: true
