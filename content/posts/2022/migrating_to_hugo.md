@@ -2,11 +2,12 @@
 title: Why and how i migrated my blog from nuxt/content to hugo
 summary: reasons for migrating your blog to hugo
 date: 2022-08-16
-author: xnacly
+slug: migrate-to-hugo
 tags:
 - js 
 - blog 
 - md
+- web
 ---
 
 > **DISCLAIMER**

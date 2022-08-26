@@ -3,10 +3,12 @@ title: "Quick and dirty RSS/XML to JSON parser"
 summary: Parsing RSS feeds into JSON objects using javascript
 author: xnacly
 date: 2022-07-18
+slug: rss-parser
 tags: 
 - js
 - xml
 - json
+- rss
 ---
 
 ## Perquisites:

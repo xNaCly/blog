@@ -1,6 +1,7 @@
 ---
 title: "Looking back on the first year of uni"
 date: 2022-08-24
+slug: first-year-of-uni
 tags:
     - uni
     - life

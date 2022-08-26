@@ -4,6 +4,7 @@ title: "xnacly - blog"
 theme: xnacly
 canonifyURLs: true
 paginate: 6
+enableRobotsTXT: true
 
 markup:
     highlight:
