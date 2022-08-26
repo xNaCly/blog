@@ -8,4 +8,4 @@ I am currently majoring in applied computer science at [DHBW](https://www.dhbw.d
 This blog is powered by [hugo](https://github.com/gohugoio/hugo) with my own custom
 [theme](https://github.com/xNaCly/hugo-theme-mini)
 
-## My skills include but aren't limited to:
+### My skills include but aren't limited to:
