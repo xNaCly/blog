@@ -10,13 +10,15 @@ tags:
 
 Your website is probably too heavy and too slow, thats a fact. 
 
-Modern websites load tons of scripts, grafics and ads while you are just trying to visit the website.
-While loding more and more content gets injected into the DOM[^dom].
+Modern websites load tons of scripts, graphics and ads while you are just trying to visit the website.
+While loading more and more content gets injected into the DOM[^dom].
 
 
 This is a `4.` Step guide to make your website more lightweight.
 
-## 1. Think what your website needs to able to do and choose the tech stack accordingly
+## 1. Making the right choice
+
+Think what your website needs to able to do and choose the tech stack accordingly:
 
 This is a commonly discussed topic in the tech space, but lets think about it:
 
