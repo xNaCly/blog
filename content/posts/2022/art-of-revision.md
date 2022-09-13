@@ -4,7 +4,6 @@ summary: How to effectively revision your papers
 date: 2022-09-02
 tags:
 - uni
-draft: true
 ---
 
 ## 1. Let the tiny people in the computer work for you
