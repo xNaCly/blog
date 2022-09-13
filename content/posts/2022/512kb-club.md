@@ -4,7 +4,6 @@ summary: This page is now officially a member of the 512kb club
 date: 2022-09-13
 tags:
 - meta
-draft: true
 ---
 
 My blog / portfolio is now officially a [512kb club](https://512kb.club) green team member. 
