@@ -1,7 +1,7 @@
 {
 	"skills": [
 		{
-			"title": "vscode",
+			"title": "VScode",
 			"level": "expert",
 			"date": "2020-05-01",
 			"img": "vscode-original"
@@ -43,7 +43,7 @@
 			"img": "npm-original-wordmark"
 		},
 		{
-			"title": "yarn",
+			"title": "Yarn",
 			"level": "advanced",
 			"date": "2022-01-01",
 			"img": "yarn-original-wordmark"
@@ -61,49 +61,49 @@
 			"img": "ubuntu-plain"
 		},
 		{
-			"title": "Arch-Linux",
+			"title": "Linux",
 			"level": "advanced",
 			"date": "2021-06-01",
 			"img": "linux-original"
 		},
 		{
-			"title": "javascript",
+			"title": "JavaScript",
 			"level": "advanced",
 			"date": "2019-06-30",
 			"img": "javascript-original"
 		},
 		{
-			"title": "python",
+			"title": "Python",
 			"level": "advanced",
 			"date": "2020-05-06",
 			"img": "python-original"
 		},
 		{
-			"title": "Latex",
+			"title": "LaTeX",
 			"level": "advanced",
 			"date": "2021-09-01",
 			"img": "latex-original"
 		},
 		{
-			"title": "git",
+			"title": "Git",
 			"level": "advanced",
 			"date": "2020-08-01",
 			"img": "git-plain"
 		},
 		{
-			"title": "bulma",
+			"title": "Bulma",
 			"level": "advanced",
 			"date": "2021-09-01",
 			"img": "bulma-plain"
 		},
 		{
-			"title": "bash",
+			"title": "Bash",
 			"level": "advanced",
 			"date": "2020-08-01",
 			"img": "bash-original"
 		},
 		{
-			"title": "github",
+			"title": "GitHub",
 			"level": "advanced",
 			"date": "2020-08-01",
 			"img": "github-original"
@@ -115,7 +115,7 @@
 			"img": "vim-original"
 		},
 		{
-			"title": "mongodb",
+			"title": "mongoDB",
 			"level": "advanced",
 			"date": "2021-01-01",
 			"img": "mongodb-original"
@@ -139,37 +139,37 @@
 			"img": "nodejs-original"
 		},
 		{
-			"title": "Unix like Operating systems",
+			"title": "*nix os",
 			"level": "advanced",
 			"date": "2021-06-30",
 			"img": "unix-original"
 		},
 		{
-			"title": "c",
+			"title": "C",
 			"level": "intermediate",
 			"date": "2021-09-01",
 			"img": "c-original"
 		},
 		{
-			"title": "flask",
+			"title": "Flask",
 			"level": "intermediate",
 			"date": "2019-09-01",
 			"img": "flask-original"
 		},
 		{
-			"title": "react",
+			"title": "React",
 			"level": "intermediate",
 			"date": "2021-01-01",
 			"img": "react-original"
 		},
 		{
-			"title": "photoshop",
+			"title": "Photoshop",
 			"level": "intermediate",
 			"date": "2021-01-01",
 			"img": "photoshop-plain"
 		},
 		{
-			"title": "java",
+			"title": "Java",
 			"level": "intermediate",
 			"date": "2021-10-01",
 			"img": "java-original"
@@ -181,19 +181,19 @@
 			"img": "php-original"
 		},
 		{
-			"title": "Typescript",
+			"title": "TypeScript",
 			"level": "intermediate",
 			"date": "2021-05-01",
 			"img": "typescript-original"
 		},
 		{
-			"title": "apache",
+			"title": "Apache",
 			"level": "intermediate",
 			"date": "2022-03-01",
 			"img": "apache-original"
 		},
 		{
-			"title": "material Ui",
+			"title": "Material Ui",
 			"level": "intermediate",
 			"date": "2021-05-01",
 			"img": "materialui-original"
@@ -247,19 +247,19 @@
 			"img": "jest-plain"
 		},
 		{
-			"title": "matlab",
+			"title": "MatLab",
 			"level": "beginner",
 			"date": "2021-10-01",
 			"img": "matlab-plain"
 		},
 		{
-			"title": "raspberrypi",
+			"title": "Raspberrypi",
 			"level": "beginner",
 			"date": "2022-05-01",
 			"img": "raspberrypi-original"
 		},
 		{
-			"title": "android studio",
+			"title": "Android Studio",
 			"level": "beginner",
 			"date": "2021-12-01",
 			"img": "androidstudio-original-wordmark"
