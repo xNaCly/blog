@@ -7,7 +7,7 @@ tags:
 ---
 
 ## 1. Let the tiny people in the computer work for you
-You need to use a grammar and spelling checker. 
+You need to use a grammar and spell checker. 
 This is the most obvious and **the** most important of the tips on this list, 
 both of these tools help to improve your writing style drastically.
 

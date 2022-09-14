@@ -1,6 +1,7 @@
 ---
 title: Finally a 512kb Club member
 summary: This page is now officially a member of the 512kb club
+slug: 512kb
 date: 2022-09-13
 tags:
 - meta
