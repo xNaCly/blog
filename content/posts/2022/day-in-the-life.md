@@ -23,6 +23,8 @@ This Wednesday we took **Formal languages and finite automata** and had a lot of
 Me and classmates walked downtown to get Asian takeout.
 ### 13:00 Second class of the day
 The second class of the day was 'System-oriented programming'
+
+![notes-screenshot](/day-in-the-life/snp.png)
 ### 16:15 Walking home
 ### 17:00 Revisiting 
 - notes of the day

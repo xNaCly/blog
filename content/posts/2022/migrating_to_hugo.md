@@ -4,9 +4,8 @@ summary: reasons for migrating your blog to hugo
 date: 2022-08-16
 slug: migrate-to-hugo
 tags:
-- js 
 - blog 
-- md
+- markdown
 - web
 ---
 
