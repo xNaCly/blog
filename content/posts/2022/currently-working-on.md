@@ -2,6 +2,7 @@
 title: "What I am currently working on"
 summary: small status update about my current work and tasks
 date: 2022-09-14
+draft: true
 ---
 
 > This article will probably change on a weekly basis, I'll try my best to update it regularly.
