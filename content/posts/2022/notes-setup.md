@@ -1,6 +1,7 @@
 ---
 title: "How to write notes in University"
 date: 2022-09-23
+slug: notes
 summary: An overview of my note setup
 tags:
 - uni
@@ -55,7 +56,7 @@ depending on the order of the appearance of the class in the current semester an
 
 Every folder also includes a markdown file with the folders name. This file contains links to the notes contained in the current folder.
 
-![folder-markdown](/notes/folder_markdown.png)
+![folder-markdown](/notes/folder_markdown.webp)
 
 This is required because otherwise obsidian won't display the link connection in the graph view.
 
@@ -75,13 +76,13 @@ My go to application for taking notes is obsidian, i chose obsidian because it s
 
 Obsidian supports a wide array of markdown add-ons, plugins other useful stuff for university, such as:
 - graph view
-    ![graph-view](/notes/graph.png)
+    ![graph-view](/notes/graph.webp)
 - callouts (better blockquotes)
-    ![callout](/notes/callouts.png)
+    ![callout](/notes/callouts.webp)
 - diagrams with mermaidjs
-    ![diagram](/notes/mermaidjs.png)
+    ![diagram](/notes/mermaidjs.webp)
 - LaTeX
-    ![latex](/notes/latex.png)
+    ![latex](/notes/latex.webp)
 
 (*obsidian has a vim plugin*) 😁
 
