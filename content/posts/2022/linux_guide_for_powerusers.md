@@ -6,7 +6,6 @@ slug: linux-for-powerusers
 date: 2022-08-23
 tags:
     - linux
-    - guide
 ---
 
 ## What to expect

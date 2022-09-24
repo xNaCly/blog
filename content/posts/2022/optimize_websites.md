@@ -2,9 +2,9 @@
 title: "How to optimize websites for fast loading and slow network speeds"
 date: 2022-08-26
 slug: web-performance
+summary: Optimize websites for a better user experience
 tags:
     - web
-    - guide
     - performance
 ---
 

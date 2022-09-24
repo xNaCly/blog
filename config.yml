@@ -27,4 +27,4 @@ params:
     showPowerBy: false
     showToc: true
     enableRSS: true
-    hiddenPostSummaryInHomePage: true
+    hiddenPostSummaryInHomePage: false
