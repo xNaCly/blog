@@ -8,7 +8,7 @@ tags:
     - performance
 ---
 
-Your website is probably too heavy and too slow, thats a fact. 
+Your website is probably too heavy and too slow, that's a fact. 
 
 Modern websites load tons of scripts, graphics and ads while you are just trying to visit the website.
 While loading more and more content gets injected into the DOM[^dom].
@@ -22,7 +22,7 @@ Think what your website needs to able to do and choose the tech stack accordingl
 
 This is a commonly discussed topic in the tech space, but lets think about it:
 
-- your website most liky wont need a framework such as react or angular
+- your website most likely wont need a framework such as react or angular
 - you should probably use SSR[^ssr] with the framework you're using (if its supported)
 - if you're writing a blog, switch to a static site generator such as [hugo](https://gohugo.io) or [ty11](https://www.11ty.dev)
 - if you really need dynamic content rerendering, optimize[^react_optimize] [^vuejs_optimize]!
