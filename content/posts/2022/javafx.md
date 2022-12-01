@@ -3,9 +3,9 @@ title: "Custom events and submitting on enter using JavaFx"
 summary: Creating custom events in javafx to handle submitting on enter in TextFields
 date: 2022-07-14
 slug: javafx-events
-tags: 
-- java
-- javafx
+tags:
+    - java
+    - javafx
 ---
 
 This blog post will showcase a simple, small and often overlooked usage of event handlers[^1] in Javafx[^2].

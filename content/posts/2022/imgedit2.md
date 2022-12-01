@@ -3,8 +3,8 @@ title: "Image editor in C: Part II"
 summary: Writing a basic image editor as a comp science project, Part II
 author: xnacly
 date: 2022-03-09
-tags: 
-- c
+tags:
+    - c
 ---
 
 Today I will lay out the structure and functions of the `util` and `pgm` libraries. Generally speaking, you should take

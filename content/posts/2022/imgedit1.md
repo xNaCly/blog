@@ -3,8 +3,8 @@ title: "Image editor in C: Part I"
 summary: Writing a basic image editor as a comp science project, Part I
 author: xnacly
 date: 2022-03-08
-tags: 
-- c
+tags:
+    - c
 ---
 
 ## Project Overview
@@ -32,7 +32,9 @@ in three subtasks and is to be finished till late March.
 
 The `PGM` editor should implement the `Portable GrayMap` standard, which I will explain in the next chapter. It should
 also include methods to manipulate Images in the `PGM`-format. The following functions are required by the lecturer. :
+
 ### README
+
 ```
 pgmE - portable graymap Editor
 ==========
@@ -47,7 +49,7 @@ In order to build you need:
 Running pgmE
 ------------
 Start it by running:
-    
+
     make run
 
 This will compile pgmE.

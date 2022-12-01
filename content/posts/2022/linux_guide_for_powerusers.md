@@ -281,15 +281,15 @@ Dotfiles are files starting with a `.`. These files are hidden by default and ca
 $: pwd
 /home/teo
 
-# (l)i(s)t directory content 
+# (l)i(s)t directory content
 #   [-l: long listing format]
 $: ls -l
 total 0
 drwxr-xr-x 1 teo teo 4096 Aug 24 09:29 Documents
 
-# (l)i(s)t directory content 
+# (l)i(s)t directory content
 #   [-l: long listing format, -a: list all files (includes hidden)]
-$: ls -la 
+$: ls -la
 total 16
 drwxr-x--- 1 teo  teo  4096 Aug 24 09:29 .
 drwxr-xr-x 1 root root 4096 Aug  5 09:15 ..
@@ -306,9 +306,9 @@ drwxr-xr-x 1 teo  teo  4096 Aug 24 09:29 Documents
 
 In the above one can directly see a config file such as `.bashrc`. This file for instance contains all the configuration for bash, as the name suggests.
 
-> **Freedesktop.org: XDG basedir specs** 
-> 
->  *`$XDG_CONFIG_HOME` defines the base directory relative to which user-specific configuration files should be stored. 
+> **Freedesktop.org: XDG basedir specs**
+>
+>  *`$XDG_CONFIG_HOME` defines the base directory relative to which user-specific configuration files should be stored.
 >  If `$XDG_CONFIG_HOME` is either not set or empty, a default equal to `$HOME/.config` should be used.* [^file_system_standard]
 
 Config files are often stored in files prefixed by a `.`, or in the `.config` directory, therefore they are called dotfiles..
@@ -321,10 +321,10 @@ Neovim is useful with its defaults, but a minimal config can help to get the mos
 Open a new terminal, paste the following:
 
 ```sh
-# install the neovim package using pacman as the superuser 
+# install the neovim package using pacman as the superuser
 sudo pacman -S neovim
 # (c)hange (d)irectory to the user config which can be found at ~/.config
-cd ~/.config 
+cd ~/.config
 # (m)a(k)e a new (dir)ectory named nvim
 mkdir nvim
 # create a new file named init.vim in the ~/.config/nvim folder
@@ -338,7 +338,7 @@ press `i` to switch to insert mode and paste the following configuration using `
 
 
 ```vim
-set number								" enable line numbers 
+set number								" enable line numbers
 set hidden 								" hide buffers
 syntax on                               " Enables syntax highlighing
 set nowrap                              " Display long lines as just one line
@@ -397,20 +397,20 @@ To add plugins to vim we need to do the following:
 
 ```vim
 call plug#begin('~/.config/nvim/autoload/plugged')
-    " define fzf as a plugin 
+    " define fzf as a plugin
     Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 
     " plugins for icons in the file tree
     Plug 'kyazdani42/nvim-web-devicons'
     Plug 'ryanoasis/vim-devicons'
 
-    " syntax support for the file tree 
+    " syntax support for the file tree
     Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
 
     " plugin to display a file tree
     Plug 'scrooloose/NERDTree'
 
-    " add the closing pair to ("'{[ 
+    " add the closing pair to ("'{[
     Plug 'jiangmiao/auto-pairs'
 call plug#end()
 ```
@@ -423,12 +423,12 @@ Go back into the vim config and add the following lines to interact with the plu
 
 ```vim
 " this defines space as out custom button to start key combinations such as space+f to fuzzy search
-let mapleader="\<space>" 
+let mapleader="\<space>"
 
 " map space+f to the command ':FZF' which starts the fuzzy finder window
 nnoremap <silent> <Leader>f :FZF<CR>
 
-" map ctrl+b to the file tree 
+" map ctrl+b to the file tree
 nnoremap <silent> <C-b> :NERDTreeToggle<CR>
 ```
 
@@ -463,14 +463,14 @@ sudo pacman -S git
 
 Go to [github](https://github.com/)
 1. sign in or sign up
-2. click on your profile picture 
+2. click on your profile picture
 3. click on settings.
-4. now navigate to 
+4. now navigate to
 
 `Settings->Developer Settings->Personal access tokens->Generate new token`
 
 5. name it `manjar-vm`
-6. click on the `repo` checkbox 
+6. click on the `repo` checkbox
 7. scroll to the bottom and click on generate token.
 8. copy the token into a notepad (should be prefixed with `ghp_`)
 
@@ -495,20 +495,20 @@ Now go to [github/new repo](https://github.com/new) to create a new private repo
 1. name it `manjaro vm test`
 2. click on `Private`
 3. scroll down and create your repo.
-4. copy the repo url from the blue box (`https://github.com/<username>/test.git`) 
+4. copy the repo url from the blue box (`https://github.com/<username>/test.git`)
 
 ```bash
 # replace <username> with your github username
-# You will be prompted for your email and your password, 
+# You will be prompted for your email and your password,
 # input the email used to sign in to github,
 # as the password you will need to use the access token we generated before.
 git clone https://github.com/<username>/test.git
 # cloning into 'test'...
-# Username for 'https://github.com': 
+# Username for 'https://github.com':
 # Password for ... :
 # warning: You appear to have cloned an empty repository
 ```
- 
+
 You are now authenticated to github. Test your config by creating a readme and pushing it to master:
 
 ```bash
@@ -527,12 +527,12 @@ To display anything and manage our windows, we will need the i3gaps group:
 sudo pacman -S i3 dmenu
 ```
 ```text
-[sudo] password for teo: 
+[sudo] password for teo:
 :: There are 5 members in group i3:
 :: Repository community
    1) i3-gaps  2) i3-wm  3) i3blocks  4) i3lock  5) i3status
 
-Enter a selection (default=all): 
+Enter a selection (default=all):
 ```
 
 Input your password and hit `Enter`.
@@ -560,14 +560,14 @@ i3 has a pretty unique keymap, here are the most basics ones:
 | `Super+[0-9]`   | switch to workspace 1-10 |
 | `Super+Shift+[0-9]`   | move focused window to workspace 1-10 |
 
-See the [i3 docs](https://i3wm.org/docs/userguide.html) for keybindings and configuration  help, also see my [i3 config](https://github.com/xNaCly/dotfiles/blob/master/i3/config) for inspiration. 
+See the [i3 docs](https://i3wm.org/docs/userguide.html) for keybindings and configuration  help, also see my [i3 config](https://github.com/xNaCly/dotfiles/blob/master/i3/config) for inspiration.
 
 ### i3status (i3 status bar)
-i3status is very easily configurable. 
+i3status is very easily configurable.
 
 ```bash
 # (c)hange (d)irectory to the user config which can be found at ~/.config
-cd ~/.config 
+cd ~/.config
 # (m)a(k)e a new (dir)ectory named i3status
 mkdir i3status
 # open the config in neovim
@@ -633,7 +633,7 @@ Configure Kitty by opening `~/.config/kitty/kitty.conf` using neovim and pasting
 
 ```text
 font_family                 JetBrainsMono Nerd Font         # configure font family
-bold_font                   auto                            
+bold_font                   auto
 italic_font                 auto
 bold_italic_font            auto
 font_size                   13.0
@@ -713,7 +713,7 @@ To prevent the walllpaper reset we can read the nitrogen manpage[^nitrogen_manpa
 nvim ~/.config/i3/config
 ```
 
-1. Press `Shift+g` to jump to the last line of the file. 
+1. Press `Shift+g` to jump to the last line of the file.
 2. Now press `o` to switch into insert mode in the line below.
 3. We will now insert a `exec --no-startup-id` statement, read more about it here[^i3docs_exec]
 
@@ -730,10 +730,10 @@ Your wallpaper will now be restored on boot.
 ## Wrapping up.
 
 After reading through this guide and following each step, you can now:
-- understand the difference between a distro and the kernel 
+- understand the difference between a distro and the kernel
 - install linux in a virtual machine
 - use a package manager
-- use basic vim 
+- use basic vim
 - understand the basics of the unix file system
 - use a floating window manager
 - use git to version your files
@@ -741,7 +741,7 @@ After reading through this guide and following each step, you can now:
 
 If there is anything wrong or you are having questions just create a new issue [here](https://github.com/xnacly/blog/issues/new)
 
-I will some day follow up on this and make a ricing guide, but until now you should be able to evolve your workflows and get comfy using i3. 
+I will some day follow up on this and make a ricing guide, but until now you should be able to evolve your workflows and get comfy using i3.
 
 I appended some Screenshots to visualise the result of this guide.
 
