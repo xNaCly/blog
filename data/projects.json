@@ -1,0 +1,64 @@
+{
+    "projects": [
+        {
+            "title": "git-auto-sync",
+            "description": "highly configurable utility to commit and push to the remote origin every X minutes ⏰",
+            "url": "https://github.com/xNaCly/git-auto-sync",
+            "tech": ["Git", "Go"]
+        },
+        {
+            "title": "Dotfiles",
+            "description": "collection of my linux config files, including setup / installer script 💪",
+            "url": "https://github.com/xNaCly/dotfiles",
+            "tech": ["Shell", "Lua", "Python"]
+        },
+        {
+            "title": "Todo-Application",
+            "description": "Assigment for the web engineering class in the 3d semester, marked with an A- 🎓",
+            "url": "https://github.com/xNaCly/todo-application",
+            "tech": ["Typescript", "React", "Express"]
+        },
+        {
+            "title": "Portfolio v2",
+            "description": "minimal staticly generated blog / portfolio, powered by hugo and a custom theme 🎨",
+            "url": "https://github.com/xNaCly/blog",
+            "tech": ["Hugo", "HTML", "CSS"]
+        },
+        {
+            "title": "opus cli",
+            "description": "simple to-do list manager, written for the terminal, designed for powerusers ⚡",
+            "url": "https://github.com/xNaCly/opusCli",
+            "tech": ["Rust", "SQLite"]
+        },
+        {
+            "title": "c_paket",
+            "description": "fast and efficient source based package manager for the c programming language 📦",
+            "url": "https://github.com/xNaCly/c_paket",
+            "tech": ["C", "Gcc", "Make"]
+        },
+        {
+            "title": "pgmE",
+            "description": "extremely fast, small and efficient editor which implements the pgm standard 📷",
+            "url": "https://github.com/xNaCly/pgmE",
+            "tech": ["C", "Gcc", "Make"]
+        },
+        {
+            "title": "better-issues",
+            "description": "cdn to render github issues and readmes as images using puppeteer 📑",
+            "url": "https://github.com/xNaCly/better-issues",
+            "tech": ["Javascript", "Node.js", "Puppeteer"]
+        },
+        {
+            "title": "xc",
+            "description": "implementation of the gnu coreutil wordcount (wc) tool in various languages 🧾",
+            "url": "https://github.com/xNaCly/xc",
+            "tech": ["C", "Go", "Rust", "Java", "Python"]
+        },
+        {
+            "title": "Portfolio v1",
+            "description": "first iteraton of my portfolio, uses nuxt-content for the blog, written in vue 🕸",
+            "url": "https://github.com/xNaCly/portfolio",
+            "tech": ["Vue.js", "nuxt", "Javascript"]
+        }
+    ]
+}

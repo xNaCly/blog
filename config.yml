@@ -3,7 +3,7 @@ languageCode: en-us
 title: "xnacly - blog"
 theme: xnacly
 canonifyURLs: true
-paginate: 6
+paginate: 4
 enableRobotsTXT: true
 
 markup:
