@@ -8,15 +8,67 @@ tags:
 - PDE
 ---
 
-> This is the second part of the personalized development environment series, [Part I]()
+> This is the second part of the personalized development environment series, every part depends heavily on the previous one 
+> - Prev part: [Part I](/posts/2022/neovim-ped-1/)
+> - ~~Next part: [Part III](/posts/2022/configure-fzf-nvim/)~~
 
 Coc allows us to install vscode extensions and use language servers originially written for vscode
 
 ## Installing coc
 
-```lua
--- in nvim/lua/plugins.lua:
+Add the highlighted lines 16 and 17 to `nvim/lua/plugins.lua`
 
+```lua {hl_lines=[16,17]}
+-- i use vimplug to manage my plugins
+-- this checks if vimplug is installed, if not install it
+vim.cmd([[
+if empty(glob('~/.config/nvim/autoload/plug.vim'))
+  silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
+    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+endif
+]])
+
+-- assign variable
+local Plug = vim.fn['plug#']
+
+
+-- in between this we call Plug to specify plugins
+vim.call('plug#begin', '~/.config/nvim/plugged')
+    -- vscode extension provider
+    Plug 'neoclide/coc.nvim'
+
+    -- display buffers and tabs nicely
+    Plug 'akinsho/bufferline.nvim'
+
+
+    -- color theme / sheme
+    Plug('folke/tokyonight.nvim', { branch = 'main' })
+
+
+    -- comment helper
+    Plug 'tpope/vim-commentary'
+
+
+    -- status line
+    Plug 'nvim-lualine/lualine.nvim'
+
+
+    -- file explorer
+    Plug 'nvim-tree/nvim-tree.lua'
+
+
+    -- icons for everything, file explorer, tabs, statusline
+    Plug 'nvim-tree/nvim-web-devicons'
+
+
+    -- automatically add "([ pairs if first one is typed
+    Plug 'jiangmiao/auto-pairs'
+
+
+    -- startup interface
+    Plug 'mhinz/vim-startify'
+
+vim.call('plug#end')
 ```
 
 ## Installing and using coc Extensions
@@ -39,55 +91,12 @@ To install extensions, coc exposes the `CocInstall` command:
 2. register a new `:Prettier` command by putting the following in your `init.lua`
 
 ```lua
-vim.cmd[[
-    command! -nargs=0 Prettier :CocCommand prettier.forceFormatDocument
-]]
 ```
 
 3. reload the config by running `:source %`
 
-## Coc keybindings:
+## Coc keybindings
 ```lua
--- helper for mapping new keybinds
-function map(mode, lhs, rhs, opts)
-    local options = { noremap = true }
-    if opts then
-        options = vim.tbl_extend("force", options, opts)
-    end
-    vim.api.nvim_set_keymap(mode, lhs, rhs, options)
-end
-
--- **************************************
--- taken from the coc.nvim example config:
--- https://github.com/neoclide/coc.nvim
-function _G.show_docs()
-    local cw = vim.fn.expand('<cword>')
-    if vim.fn.index({'vim', 'help'}, vim.bo.filetype) >= 0 then
-        vim.api.nvim_command('h ' .. cw)
-    elseif vim.api.nvim_eval('coc#rpc#ready()') then
-        vim.fn.CocActionAsync('doHover')
-    else
-        vim.api.nvim_command('!' .. vim.o.keywordprg .. ' ' .. cw)
-    end
-end
-
-function _G.check_back_space()
-    local col = vim.fn.col('.') - 1
-    return col == 0 or vim.fn.getline('.'):sub(col, col):match('%s') ~= nil
-end
--- **************************************
-
--- show docs for the keyword under the cursor by pressing Shift+k
-map("n", "K", "<CMD>lua _G.show_docs()<CR>", {silent = true})
-
--- go to the definition for the element under the cursor by pressing gd
-map("n", "gd", "<Plug>(coc-definition)", {silent = true})
--- go to the references for the element under the cursor by pressing gr
-map("n", "gr", "<Plug>(coc-references)", {silent = true})
-
-local opts = {silent = true, noremap = true, expr = true, replace_keycodes = false}
--- enables autocomplete on space
-map("i", "<TAB>", 'coc#pum#visible() ? coc#pum#confirm() : v:lua.check_back_space() ? "<TAB>" : coc#refresh()', opts)
 ```
 
 ## Coc configuration
