@@ -1,14 +1,14 @@
 ---
 title: "Install & Configure coc.nvim - PDE p.II"
-date: 2022-12-28
+date: 2022-12-29
 summary: "Guide and example on how to configure the coc.nvim extension and lsp provider (config and keybinds)"
-draft: true
 tags:
-- nvim
-- PDE
+  - nvim
+  - PDE
 ---
 
-> This is the second part of the personalized development environment series, every part depends heavily on the previous one 
+> This is the second part of the personalized development environment series, every part depends heavily on the previous one
+>
 > - Prev part: [Part I](/posts/2022/neovim-ped-1/)
 > - ~~Next part: [Part III](/posts/2022/configure-fzf-nvim/)~~
 
@@ -74,40 +74,117 @@ vim.call('plug#end')
 ## Installing and using coc Extensions
 
 To install extensions, coc exposes the `CocInstall` command:
+
 ```vim
 :CocInstall <extension>
 ```
 
 ### Prettier
 
-> Prettier is an opinionated code formatter. 
-> It enforces a consistent style by parsing your code and re-printing 
+> Prettier is an opinionated code formatter.
+> It enforces a consistent style by parsing your code and re-printing
 > it with its own rules that take the maximum line length into account, wrapping code when necessary.
 
 1. Install [Prettier](https://github.com/neoclide/coc-prettier):
 
    open neovim and run the following command: `:CocInstall coc-prettier`
 
-2. register a new `:Prettier` command by putting the following in your `init.lua`
+2. register a new `:Prettier` command by adding the highlighted lines in your `plugin-options.lua`
 
-```lua
+```lua {hl_lines=[28,29]}
+-- set colorsheme
+vim.cmd([[colorscheme tokyonight-night]])
+
+-- bufferline config
+require("bufferline").setup{
+    options = {
+        -- only display tabs, hide buffers
+        mode = "tabs",
+
+        -- style for kitty terminal
+        separator_style = "slant",
+
+        -- display coc diagnostics
+        diagnostics = "coc"
+    }
+}
+
+-- nvim tree setup
+require("nvim-tree").setup()
+
+-- lualine setup
+require("lualine").setup{
+    options = {
+        theme = "palenight"
+    }
+}
+
+-- registering :Prettier command
+vim.cmd([[command! -nargs=0 Prettier :CocCommand prettier.forceFormatDocument]])
 ```
 
 3. reload the config by running `:source %`
 
 ## Coc keybindings
-```lua
+
+Add the highlighted lines to the `keybindings.lua` file:
+
+```lua {hl_lines=["19-30", "32-36", "38-43"]}
+-- helper for mapping custom keybindings
+-- source: https://gist.github.com/Jarmos-san/d46605cd3a795513526448f36e0db18e#file-example-keymap-lua
+function map(mode, lhs, rhs, opts)
+    local options = { noremap = true }
+    if opts then
+        options = vim.tbl_extend("force", options, opts)
+    end
+    vim.api.nvim_set_keymap(mode, lhs, rhs, options)
+end
+
+-- toggle the nvim tree sidebar with ctrl+b
+map("n", "<C-b>", ":NvimTreeToggle<CR>", {silent = true})
+
+-- move visual selection down with shift+J
+map("v", "J", ":m '>+1<CR>gv=gv")
+-- move visual selection up with shift+K
+map("v", "K", ":m '<-2<CR>gv=gv")
+
+-- taken from the coc.nvim example config:
+-- https://github.com/neoclide/coc.nvim
+function _G.show_docs()
+    local cw = vim.fn.expand('<cword>')
+    if vim.fn.index({'vim', 'help'}, vim.bo.filetype) >= 0 then
+        vim.api.nvim_command('h ' .. cw)
+    elseif vim.api.nvim_eval('coc#rpc#ready()') then
+        vim.fn.CocActionAsync('doHover')
+    else
+        vim.api.nvim_command('!' .. vim.o.keywordprg .. ' ' .. cw)
+    end
+end
+
+-- autocomplete
+function _G.check_back_space()
+    local col = vim.fn.col('.') - 1
+    return col == 0 or vim.fn.getline('.'):sub(col, col):match('%s') ~= nil
+end
+
+-- view the definition of the currently hovering over element
+map("n", "gd", "<Plug>(coc-definition)", {silent = true})
+-- view a list of the references of the currently hovering over element
+map("n", "gr", "<Plug>(coc-references)", {silent = true})
+-- view documentation for the currently hovering over element
+map("n", "K", "<CMD>lua _G.show_docs()<CR>", {silent = true})
 ```
 
 ## Coc configuration
 
 > **Info**:
-> 
+>
 > To get intellj sense for the config install the `coc-json`:
+>
 > ```text
 > :CocInstall coc-json
 > ```
-> 
+>
 > - Read more about the configuration options [here](https://github.com/neoclide/coc.nvim/wiki/Using-the-configuration-file).
 
 Coc can be configured via a json file at `~/.config/nvim/coc-settings.json`:

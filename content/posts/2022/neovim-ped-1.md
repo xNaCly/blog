@@ -8,7 +8,7 @@ tags:
 ---
 
 > This is the first part of the personalized development environment series
-> - Next part: ~~[Part II](/posts/2022/configure-coc-nvim/)~~
+> - Next part: [Part II](/posts/2022/configure-coc-nvim/)
 
 ## Prerequisites
 The reader of this guide needs to know the basics of:
@@ -286,6 +286,14 @@ require("bufferline").setup{
 
 -- nvim tree setup
 require("nvim-tree").setup()
+
+
+-- lualine setup
+require("lualine").setup{
+    options = {
+        theme = "palenight"
+    }
+}
 ```
 
 4. Open `nvim/lua/keybindings.lua` and enter the following configuration:
