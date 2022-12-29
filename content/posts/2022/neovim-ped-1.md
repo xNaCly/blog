@@ -311,7 +311,7 @@ map("v", "K", ":m '<-2<CR>gv=gv")
 
 ## Before and after
 
-![before after](/vim/before_after.png)
+![before after](/vim/before_after.webp)
 *Left the now configured neovim, right the stock neovim*
 
 ## Foreshadowing 

@@ -142,5 +142,5 @@ Coc can be configured via a json file at `~/.config/nvim/coc-settings.json`:
 ```
 
 This config looks like this:
-![coc showcase](/vim/coc.png)
-![coc showcase 2](/vim/coc2.png)
+![coc showcase](/vim/coc.webp)
+![coc showcase 2](/vim/coc2.webp)
