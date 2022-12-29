@@ -129,7 +129,7 @@ vim.cmd([[command! -nargs=0 Prettier :CocCommand prettier.forceFormatDocument]])
 
 Add the highlighted lines to the `keybindings.lua` file:
 
-```lua {hl_lines=["19-30", "32-36", "38-43"]}
+```lua {hl_lines=["19-30", "32-36", "38-43", "45-47"]}
 -- helper for mapping custom keybindings
 -- source: https://gist.github.com/Jarmos-san/d46605cd3a795513526448f36e0db18e#file-example-keymap-lua
 function map(mode, lhs, rhs, opts)
@@ -173,6 +173,10 @@ map("n", "gd", "<Plug>(coc-definition)", {silent = true})
 map("n", "gr", "<Plug>(coc-references)", {silent = true})
 -- view documentation for the currently hovering over element
 map("n", "K", "<CMD>lua _G.show_docs()<CR>", {silent = true})
+
+-- use Tab to trigger completion for the currently selected completion
+local opts = {silent = true, noremap = true, expr = true, replace_keycodes = false}
+map("i", "<TAB>", 'coc#pum#visible() ? coc#pum#confirm() : v:lua.check_back_space() ? "<TAB>" : coc#refresh()', opts)
 ```
 
 ## Coc configuration
