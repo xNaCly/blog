@@ -2,6 +2,9 @@
 title: "Using Vue.js with Electron"
 summary: "Guide for setting up and packaging a vue.js project with electron and vite"
 date: 2023-01-02
+tags:
+- vue.js
+- electron
 ---
 
 {{<callout type="Abstract">}}
