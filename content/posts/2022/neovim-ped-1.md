@@ -7,9 +7,10 @@ tags:
 - PDE
 ---
 
-> This is the first part of the personalized development environment series
-> - Next part: [Part II](/posts/2022/configure-coc-nvim/)
-
+{{<callout type="Info">}}
+This is the first part of the personalized development environment series
+- Next part: [Part II ](/posts/2022/configure-coc-nvim/)
+{{</callout>}}
 ## Prerequisites
 The reader of this guide needs to know the basics of:
 - Vim motions and keys

@@ -7,10 +7,12 @@ tags:
   - PDE
 ---
 
-> This is the second part of the personalized development environment series, every part depends heavily on the previous one
->
-> - Prev part: [Part I](/posts/2022/neovim-ped-1/)
-> - ~~Next part: [Part III](/posts/2022/configure-fzf-nvim/)~~
+{{<callout type="Info">}}
+This is the second part of the personalized development environment series, every part depends heavily on the previous one
+
+- Prev part: [Part I](/posts/2022/neovim-ped-1/)
+- ~~Next part: [Part III](/posts/2022/configure-fzf-nvim/)~~
+{{</callout>}}
 
 Coc allows us to install vscode extensions and use language servers originially written for vscode
 
