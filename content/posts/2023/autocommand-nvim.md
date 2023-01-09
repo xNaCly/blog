@@ -23,6 +23,21 @@ or neovims online docs:
 
 {{</callout>}}
 
+To define a new autocommand, we simply use the `vim.api.nvim_create_autocmd()`:
+
+```lua
+-- the first parameter represents a list of events we want to bind our command to:
+-- https://neovim.io/doc/user/autocmd.html#autocmd-events
+vim.api.nvim_create_autocmd({"BufWritePre", nil}, {
+    -- pattern allows us to restrict our callback to certain files,
+    -- https://neovim.io/doc/user/autocmd.html#autocmd-pattern
+    -- here we restrict the execution to markdown and mdx files:
+    pattern = {"*.md", "*.mdx"},
+    -- callback function will be executed once one of the events in the event list occurs
+    callback = function ()  end,
+})
+```
+
 ## Run a command before saving a file
 
 ```lua
