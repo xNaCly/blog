@@ -10,18 +10,23 @@ To check if an executable is in the path we use the `exec` package and its expor
 
 ## Docs and Resources:
 
+- [go doc os/exec package, LookPath](https://pkg.go.dev/os/exec#LookPath)
+
+{{<callout type="Info">}}
+
 - output of `go doc exec.LookPath`:
 
-```text
+```go
 package exec // import "os/exec"
-
-func LookPath(file string) (string, error)
-    LookPath searches for an executable named file in the directories named by
-    the PATH environment variable. If file contains a slash, it is tried
-    directly and the PATH is not consulted. LookPath also uses PATHEXT
-    environment variable to match a suitable candidate. The result may be an
-    absolute path or a path relative to the current directory.
+func LookPath(file string) (string, error)`
 ```
+
+LookPath searches for an executable named file in the directories named by
+the PATH environment variable. If file contains a slash, it is tried
+directly and the PATH is not consulted. LookPath also uses PATHEXT
+environment variable to match a suitable candidate. The result may be an
+absolute path or a path relative to the current directory.
+{{</callout>}}
 
 ## Snippet
 
