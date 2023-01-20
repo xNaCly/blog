@@ -18,7 +18,7 @@ To check if an executable is in the path we use the `exec` package and its expor
 
 ```go
 package exec // import "os/exec"
-func LookPath(file string) (string, error)`
+func LookPath(file string) (string, error)
 ```
 
 LookPath searches for an executable named file in the directories named by
