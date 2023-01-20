@@ -1,5 +1,5 @@
 ---
-title: "Go: check if executable is in path"
+title: "Check if executable is in the path with go"
 summary: "Quick guide with snippet on how to check if a executable is in the systems path"
 date: 2023-01-16
 tags:
