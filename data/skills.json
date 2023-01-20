@@ -1,14 +1,33 @@
 {
-    "langs":[
-        "C", "Java", "PHP", "Javascript/Typescript", "Go", "Rust", "HTML5", "CSS/sass", "Python", "SQL"
-    ],
-    "frameworks":[
-        "Nuxt", "Jest", "Bulma", "Node", "React", "Vue.js", "Express.js"
-    ],
-    "tools": [
-        "Git & Github", "Docker", "Gcc", "Neovim", "Jetbrains Intellij", "Vscode", "Npm & Yarn"
-    ],
-    "os": [
-        "Arch Linux", "Windows", "Debian & Ubuntu"
-    ]
+  "langs": [
+    "Javascript/Typescript",
+    "Go",
+    "HTML5",
+    "Rust",
+    "CSS/SCSS",
+    "Python",
+    "SQL",
+    "Java",
+    "PHP",
+    "C"
+  ],
+  "frameworks": [
+    "Node",
+    "Bulma",
+    "Express.js",
+    "React",
+    "Vue.js",
+    "Jest",
+    "Nuxt"
+  ],
+  "tools": [
+    "Neovim",
+    "Npm & Yarn",
+    "Git & Github",
+    "Vscode",
+    "Docker",
+    "Gcc",
+    "Jetbrains Intellij"
+  ],
+  "os": ["Arch Linux", "Windows", "Debian & Ubuntu"]
 }
