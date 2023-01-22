@@ -72,7 +72,7 @@ This section will probably change in the future so consult the documentation or 
 
 To view the default configuration shipped with `xgs`, take a look at the documentation [here](https://github.com/xNaCly/x-git-sync/blob/master/README.md#config-options-and-defaults)
 
-Here is the default config, which (who would've guessed my preferred way to use `xgs`):
+Here is the default config, which (who would've guessed is my preferred way of using `xgs`):
 
 ```json
 {
@@ -87,6 +87,18 @@ Here is the default config, which (who would've guessed my preferred way to use 
 ```
 
 ## Usage
+
+{{<callout type="Info"}}
+`xgs` requires and calls to `git` for almost everything it does, make sure its installed and in the systems path
+{{</callout>}}
+
+To use `xgs` you simply navigate to a directory which has a git remote configured. After that run:
+
+```bash
+xgd
+```
+
+You'll see some logs and thats it, you are now syncing your repo every 300 seconds by default.
 
 ## Tips and tricks
 
