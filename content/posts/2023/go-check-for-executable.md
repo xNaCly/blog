@@ -54,7 +54,7 @@ func main() {
 }
 ```
 
-{{<callout type="Hint">}}
+{{<callout type="Tip">}}
 
 For a realworld application of this, take a look at my [git auto sync](https://github.com/xNaCly/git-auto-sync) project,
 which uses git to periodically update a repository. For this to work it checks if git is installed before running:
