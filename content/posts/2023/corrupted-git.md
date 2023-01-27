@@ -4,7 +4,6 @@ summary: "How to fix the 'object ... is corrupt' issue which renders git unusabl
 date: 2023-01-26
 tags:
   - git
-  - guide
 ---
 
 If you ever encountered the following issue, keep reading to fix it:
