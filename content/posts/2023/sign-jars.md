@@ -1,7 +1,7 @@
 ---
 title: "How to sign jar files"
 summary: "Guide for signing jar files and verifying a jar files signature programmatically"
-date: 2023-01-27
+date: 2023-01-27T15:35:54+01:00
 tags:
   - java
 ---
