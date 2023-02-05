@@ -1,6 +1,6 @@
 ---
-title: Git cheat sheet & Guide
-summary: Small but sufficient cheat sheet and guide that contain all absolutely necessary git commands and flows for everyday use (intended for beginners)
+title: Git Guide for absolute beginners
+summary: Small but sufficient guide for github and git beginners
 date: 2023-02-04
 tags:
   - git
