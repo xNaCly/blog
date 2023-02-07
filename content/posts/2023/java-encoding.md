@@ -93,7 +93,7 @@ Running the above yields the following result:
 
 Encoding to csv is also very simple, instantiate a `StringBuilder`, append the header and after that append each line:
 
-```java{hl_lines=["44-63"]}
+```java {hl_lines=["44-63"]}
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
@@ -274,7 +274,7 @@ Running the above yields the following result:
 
 Converting the parsed data back into XML requires even more boilerplate so read the comments carefully:
 
-```java{hl_lines=["8-13", "66-123"]}
+```java {hl_lines=["8-13", "66-123"]}
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -432,7 +432,7 @@ To parse json we us the [org.json](https://github.com/stleary/JSON-java) library
 
 - Add the following highlighted line to your `build.gradle`:
 
-```gradle{hl_lines=[13]}
+```gradle {hl_lines=[13]}
 plugins {
     id 'java'
 }
@@ -533,7 +533,7 @@ The above results in the same output as the parsing for CSV and XML:
 
 Encoding java objects into json is so easy it can be done in one loc:
 
-```java{hl_lines=[47]}
+```java {hl_lines=[47]}
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
