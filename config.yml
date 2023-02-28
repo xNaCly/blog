@@ -19,6 +19,11 @@ markup:
 social:
     github: https://github.com/xnacly
     rss: https://xnacly.me/index.xml
+    
+sitemap:
+  changefreq: weekly
+  filename: sitemap.xml
+  priority: 0.5
 
 params:
     author: xnacly
