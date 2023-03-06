@@ -526,7 +526,7 @@ print(f"factors={factors}")
 
 $$
 \begin{align}
-5719 &= p \cdot q \\\
+5917 &= p \cdot q \\\
 &= \underline{61 \cdot 97}
 \end{align}
 $$
