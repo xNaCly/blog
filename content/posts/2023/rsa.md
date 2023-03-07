@@ -52,7 +52,7 @@ p = 61
 q = 97
 ```
 
-#### Calculating the sum of p and q
+#### Calculating the product of p and q
 
 Now `n` has to be determined from the multiplication of the two previously selected numbers:
 
@@ -73,7 +73,7 @@ print(f"n={p*q}")
 
 #### Calculating phi of n and e
 
-After we have chosen `p` and `q` and calculated `n`, now follows the calculation of a number `e` which becomes
+After we have chosen `p` and `q` and calculated `n`, now follows the calculation of a number by calculating phi of `n`:
 
 $$
 \begin{align}
