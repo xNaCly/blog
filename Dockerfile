@@ -2,7 +2,7 @@ FROM alpine AS build
 RUN apk add --no-cache hugo
 WORKDIR /blog
 COPY . .
-RUN hugo --minify --baseURL http://localhost
+RUN hugo --minify
 
 FROM nginx:alpine
 COPY --from=build /blog/public /data/www
