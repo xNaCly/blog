@@ -107,8 +107,8 @@ To do this we need to create a structure for each Token which holds information 
 In go the above looks something like the following:
 
 ```go
-// token.go
-package token
+// scanner/tokens.go
+package scanner
 
 type Token struct {
     Pos uint
@@ -151,8 +151,10 @@ If we were to lex this character and store it somewhere we would create the foll
 // main.go
 package main
 
+import "github.com/xnacly/fleck/scanner"
+
 func main() {
-    t := Token {
+    t := scanner.Token {
         Pos:    1,
         Kind:   0, // ? We don't know yet
         Line:   2,
@@ -166,8 +168,8 @@ func main() {
 To distinguish tokens from one another, we define a bucket load of constants:
 
 ```go
-// token.go
-package token
+// scanner/tokens.go
+package scanner
 // ...
 
 const (
@@ -195,8 +197,10 @@ We can now extend our example using our newly created enum:
 // main.go
 package main
 
+import "github.com/xnacly/fleck/scanner"
+
 func main() {
-    t := Token {
+    t := scanner.Token {
         Pos:    1,
         Kind:   HASH,
         Line:   2,
@@ -205,14 +209,41 @@ func main() {
 }
 ```
 
-Remember it was a hash (`#`).
+Remember, the character is a hash (`#`). Therefore we added the `HASH` constant from above as the `Kind` field in the resulting structure.
 
 ## Scanner
 
+- what does a scanner do
+
 ### Single char tokens
+
+- explain how to lex
+- show how to lex
 
 ### Multi char tokens
 
+- explain how to lex
+- show how to lex
+
 ## Tests
 
+- tests to check if our result is consistent
+- start small, go bigger
+
 ## Benchmarks
+
+- why benchmark
+
+### Built-in
+
+- how to use built in benchmarks
+
+### Pprof
+
+- why use pprof
+- how to view result in the browser
+- use flamecharts
+
+## Performance
+
+- steps i took to improve the Performance
