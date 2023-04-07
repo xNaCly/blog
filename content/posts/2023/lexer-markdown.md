@@ -275,12 +275,18 @@ result := []Token{
         Line:   0,
         Value:  " Heading 3",
     },
+    {
+        Pos:    13,
+        Kind:   NEWLINE,
+        Line:   0,
+        Value:  "",
+    },
 }
 ```
 
 Notice how ` Heading 3` is completely encapsulated in the last `Token` object of Kind `TEXT`.
 
-#### Scanner setup
+### Scanner setup
 
 Our first step is to create a new `Scanner` structure:
 
@@ -311,7 +317,7 @@ The fields in the structure can be explained as follows:
 | `line`    | holds the line position of the scanner in the file                                  |
 | `tokens`  | contains the lexed token objects                                                    |
 
-##### Instantiation
+#### Instantiation
 
 To instantiate we define a new exported function (a function of a module is exported if its first character is uppercase) in the package:
 
@@ -348,7 +354,7 @@ func New(fileName string) Scanner {
 
 The `scanner.New` function returns an instance of the `Scanner` structure we defined before.
 
-##### Adding a new Token
+#### Adding a new Token
 
 To write less repetitive code, we create the `scanner.Scanner.addToken` function:
 
@@ -452,7 +458,7 @@ end_of_text - length_of_text = beginning_of_the_text
 
 {{</callout>}}
 
-##### Moving through the line
+#### Moving through the line
 
 After lexing a character we want to take a look at the next one.
 Therefore we need to somehow advance to the next character and position on the line, the following function does exactly that:
@@ -480,7 +486,7 @@ The function increments the `linePos` field of the `Scanner` struct and sets the
 Due to the fact that the `bufio.Scanner` removes line breaks from the read lines we need to set the current character to a line break if we are at the end of the line. ([Source](https://pkg.go.dev/bufio#Scanner))
 This enables us to check if we are at the end of the line while iterating through the current line.
 
-##### Moving through the file
+#### Moving through the file
 
 After hitting a line break (`\n`) we of course need to advance to the next line.
 The following function allows us to do exactly this:
@@ -521,33 +527,294 @@ If the current line is of length 0 or simply empty, the function loops until it 
 
 At the end the function assigns the first character of the new line to the `curChar` field of the `Scanner` structure.
 
-##### Printing the Tokens
+#### Pretty Printing the Tokens
 
-### Single char tokens
+To debug and take a look at our processed tokens we implement the `scanner.Scanner.PrintTokens` function:
+
+```go
+// scanner/scanner.go
+package scanner
+
+// ...
+
+func (s *Scanner) PrintTokens() {
+	for _, token := range s.tokens {
+		fmt.Printf("[ '%s' | %d | %d | '%s' ]\n",
+			TOKEN_LOOKUP_MAP[token.Kind],
+			token.Pos,
+			token.Line,
+			token.Value,
+		)
+	}
+}
+```
+
+The function simply loops over every token in the `tokens` array field of the `Scanner` structure and formats the token values according to our format string.
+
+An attentive reader has already noticed the `TOKEN_LOOKUP_MAP` in line 9 of the snippet.
+This map simply binds the enums we created as our token kinds to their name, because who likes looking at numbers if they can instead look at names 😴.
+This map is defined in the `scanner/tokens.go` file and looks like this:
+
+```go
+// scanner/tokens.go
+package scanner
+
+// ...
+
+var TOKEN_LOOKUP_MAP = map[uint]string{
+	HASH:               "HASH",
+	UNDERSCORE:         "UNDERSCORE",
+	STAR:               "STAR",
+	NEWLINE:            "NEWLINE",
+	DASH:               "DASH",
+	STRAIGHTBRACEOPEN:  "STRAIGHTBRACEOPEN",
+	STRAIGHTBRACECLOSE: "STRAIGHTBRACECLOSE",
+	PARENOPEN:          "PARENOPEN",
+	PARENCLOSE:         "PARENCLOSE",
+	GREATERTHAN:        "GREATERTHAN",
+	BACKTICK:           "BACKTICK",
+	TEXT:               "TEXT",
+	BANG:               "BANG",
+}
+```
+
+This means whenever we lex a hash (`#`) and we want to check if it is a hash using our eyes, we can simply do the following:
+
+```go
+fmt.Println(TOKEN_LOOKUP_MAP[HASH])
+```
+
+Running the `scanner.Scanner.PrintTokens` function for our example `### Heading 3`, results in the following output:
+
+```text
+[ 'HASH' | 0 | 0 | '' ]
+[ 'HASH' | 1 | 0 | '' ]
+[ 'HASH' | 2 | 0 | '' ]
+[ 'TEXT' | 3 | 0 | ' Heading 3' ]
+[ 'NEWLINE' | 13 | 0 | '' ]
+```
+
+### Single character tokens
 
 A single character token in Markdown can be any of:
 
-- \# (Hash)
-- \_ (Underscore)
-- \* (Star)
-- \n (New Line)
-- \- (Dash)
-- \[ (Open Square Bracket)
-- \] (Close Square Bracket)
-- \( (Open Paren)
-- \) (Close paren)
-- \> (Bigger than)
-- \! (Bang / exclamation mark)
-- \` (Backtick)
+```text
+ # (Hash)
+ _ (Underscore)
+ * (Star)
+\n (New Line)
+ - (Dash)
+ [ (Open Square Bracket)
+ ] (Close Square Bracket)
+ ( (Open Paren)
+ ) (Close paren)
+ > (Bigger than)
+ ! (Bang / exclamation mark)
+ ` (Backtick)
+```
 
-To parse these we simply
+To parse these we simply check if the value of the `curChar` field is equal to them and call `addToken` with the tokens kind in the `scanner.Scanner.Lex` function.
 
-### Multi char tokens
+Doing this requires a for loop over all the characters in the current line while we aren't at the end of the file:
 
-- explain how to lex
-- show how to lex
+```go
+// scanner/scanner.go
+package scanner
+
+// ...
+
+func (s *Scanner) Lex() {
+	for !s.isAtEnd {
+
+    }
+}
+```
+
+{{<callout type="Tip">}}
+Remember, the `isAtEnd` field of the `Scanner` struct indicates that we left the last line of the file behind us and are therefore done with the file.
+{{</callout>}}
+
+To pave the way for matching characters we create a switch case statement for the `curChar` field of the `Scanner` structure and a variable `tokenKind`:
+
+```go {hl_lines=["8-11"]}
+// scanner/scanner.go
+package scanner
+
+// ...
+
+func (s *Scanner) Lex() {
+	for !s.isAtEnd {
+        var tokenKind uint
+        switch s.curChar {
+
+        }
+    }
+}
+```
+
+We use the `tokenKind` variable to store the kind of token we found.
+This allows us to write the call to `s.addToken` after the switch case not in each case statement:
+
+```go {hl_lines=["12"]}
+// scanner/scanner.go
+package scanner
+
+// ...
+
+func (s *Scanner) Lex() {
+	for !s.isAtEnd {
+        var tokenKind uint
+        switch s.curChar {
+
+        }
+        s.addToken(tokenKind, "")
+    }
+}
+```
+
+After adding the token the current character matches we need to move on to the next character - remember we implemented `scanner.Scanner.advance` exactly for this use case.:
+
+```go {hl_lines=["13"]}
+// scanner/scanner.go
+package scanner
+
+// ...
+
+func (s *Scanner) Lex() {
+	for !s.isAtEnd {
+        var tokenKind uint
+        switch s.curChar {
+
+        }
+        s.addToken(tokenKind, "")
+        s.advance()
+    }
+}
+```
+
+I am now going to show you how to match the hash in detail and afterwards we are going to fast forward the process for the remaining symbols.
+
+```go {hl_lines=["10-11"]}
+// scanner/scanner.go
+package scanner
+
+// ...
+
+func (s *Scanner) Lex() {
+	for !s.isAtEnd {
+        var tokenKind uint
+        switch s.curChar {
+            case '#':
+			tokenKind = HASH
+        }
+        s.addToken(tokenKind, "")
+        s.advance()
+    }
+}
+```
+
+Everything we had to do was add the case to match `#` and assign the kind of token (`HASH`) to the `tokenKind` variable.
+
+Now the other symbols:
+
+```go {hl_lines=["12-33"]}
+// scanner/scanner.go
+package scanner
+
+// ...
+
+func (s *Scanner) Lex() {
+	for !s.isAtEnd {
+        var tokenKind uint
+        switch s.curChar {
+        case '#':
+            tokenKind = HASH
+        case '!':
+            tokenKind = BANG
+        case '>':
+            tokenKind = GREATERTHAN
+        case '_':
+            tokenKind = UNDERSCORE
+        case '*':
+            tokenKind = STAR
+        case '-':
+            tokenKind = DASH
+        case '[':
+            tokenKind = STRAIGHTBRACEOPEN
+        case ']':
+            tokenKind = STRAIGHTBRACECLOSE
+        case '(':
+            tokenKind = PARENOPEN
+        case ')':
+            tokenKind = PARENCLOSE
+        case '`':
+            tokenKind = BACKTICK
+        }
+        s.addToken(tokenKind, "")
+        s.advance()
+    }
+}
+```
+
+Notice the missing line break (`\n`)?
+As i mentioned while discussing the `scanner.Scanner.advance` function, we need to add the line breaks to the end of the line ourselfs to keep track if we are at the end of the current line.
+
+To move to the next line we need to call the `scanner.Scanner.advanceLine` function if the scanner encounters the line break symbol:
+
+```go {hl_lines=["20-23"]}
+// scanner/scanner.go
+package scanner
+
+// ...
+
+func (s *Scanner) Lex() {
+	for !s.isAtEnd {
+        var tokenKind uint
+        switch s.curChar {
+        case '#':
+            tokenKind = HASH
+        case '!':
+            tokenKind = BANG
+        case '>':
+            tokenKind = GREATERTHAN
+        case '_':
+            tokenKind = UNDERSCORE
+        case '*':
+            tokenKind = STAR
+        case '\n':
+			s.addToken(NEWLINE, "")
+			s.advanceLine()
+			continue
+        case '-':
+            tokenKind = DASH
+        case '[':
+            tokenKind = STRAIGHTBRACEOPEN
+        case ']':
+            tokenKind = STRAIGHTBRACECLOSE
+        case '(':
+            tokenKind = PARENOPEN
+        case ')':
+            tokenKind = PARENCLOSE
+        case '`':
+            tokenKind = BACKTICK
+        }
+        s.addToken(tokenKind, "")
+        s.advance()
+    }
+}
+```
+
+As one can see we add a new token with the `NEWLINE` kind and afterwards advance to the next line and continue onward to the next iteration of the loop
+
+If we again look at our example we can see our lexer can already tokenize four of our five tokens - the three hashes and the line break at the end of the line.
+
+Scanning the rest of the paragraph as a token of kind `TEXT` is going to be slightly more complex.
+
+### Multi character tokens
+
+Lets talk lexing texts. We want our scanner to categorize everything between the special symbols we are already scanning for as a token of kind `TEXT`.
+To accomplish this we will need to add a default case to our switch statement:
 
 ## Tests
 
 - tests to check if our result is consistent
-- start small, go bigger
