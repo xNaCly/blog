@@ -2,7 +2,6 @@
 title: Lexical analysis of Markdown in Go
 summary: How to tokenize markdown without regular expressions
 date: 2023-04-05
-draft: true
 tags:
   - go
   - markdown
@@ -594,6 +593,21 @@ Running the `scanner.Scanner.PrintTokens` function for our example `### Heading 
 [ 'NEWLINE' | 13 | 0 | '' ]
 ```
 
+#### Getting our scanned Tokens
+
+To access the token we scanned, we create a new function called `scanner.Scanner.Tokens`, which returns the `scanner.Scanner.tokens` structure field:
+
+```go
+// scanner/scanner.go
+package scanner
+
+// ...
+
+func (s *Scanner) Tokens() []Token {
+    return s.tokens
+}
+```
+
 ### Single character tokens
 
 A single character token in Markdown can be any of:
@@ -815,6 +829,227 @@ Scanning the rest of the paragraph as a token of kind `TEXT` is going to be slig
 Lets talk lexing texts. We want our scanner to categorize everything between the special symbols we are already scanning for as a token of kind `TEXT`.
 To accomplish this we will need to add a default case to our switch statement:
 
+```go {hl_lines=["36-48"]}
+// scanner/scanner.go
+package scanner
+
+// ...
+
+func (s *Scanner) Lex() {
+	for !s.isAtEnd {
+        var tokenKind uint
+        switch s.curChar {
+        case '#':
+            tokenKind = HASH
+        case '!':
+            tokenKind = BANG
+        case '>':
+            tokenKind = GREATERTHAN
+        case '_':
+            tokenKind = UNDERSCORE
+        case '*':
+            tokenKind = STAR
+        case '\n':
+			s.addToken(NEWLINE, "")
+			s.advanceLine()
+			continue
+        case '-':
+            tokenKind = DASH
+        case '[':
+            tokenKind = STRAIGHTBRACEOPEN
+        case ']':
+            tokenKind = STRAIGHTBRACECLOSE
+        case '(':
+            tokenKind = PARENOPEN
+        case ')':
+            tokenKind = PARENCLOSE
+        case '`':
+            tokenKind = BACKTICK
+        default:
+            var res strings.Builder
+
+        out:
+            for {
+                switch s.curChar {
+                case '\n', '!', '#', '_', '*', '-', '[', ']', '(', ')', '`', '>', '?':
+                    break out
+                }
+
+                res.WriteRune(s.curChar)
+                s.advance()
+            }
+        }
+        s.addToken(tokenKind, "")
+        s.advance()
+    }
+}
+```
+
+In this default statement we create a new variable of type `strings.Builder` on which we will append the characters of the text to.
+This is considerably faster than just concatenating two strings using the `+=` operator.
+
+The next line defines a label for our following loop (`out:`).
+We will use this label to break the outer loop if we find a character which matches any special character.
+
+In this while loop we check if the current character matches a special character (lines 41-44), if it does we break at the `out` label (line 43).
+This stops the loop labeled as `out`.
+If it isn't a special character the scanner writes the current character to the `strings.Builder` and advances to the next character.
+
+We want our scanner to skip empty lines, therefore we add the following snippet at the end of the default case:
+
+```go {hl_lines=["50-52", 54]}
+// scanner/scanner.go
+package scanner
+
+// ...
+
+func (s *Scanner) Lex() {
+	for !s.isAtEnd {
+        var tokenKind uint
+        switch s.curChar {
+        case '#':
+            tokenKind = HASH
+        case '!':
+            tokenKind = BANG
+        case '>':
+            tokenKind = GREATERTHAN
+        case '_':
+            tokenKind = UNDERSCORE
+        case '*':
+            tokenKind = STAR
+        case '\n':
+			s.addToken(NEWLINE, "")
+			s.advanceLine()
+			continue
+        case '-':
+            tokenKind = DASH
+        case '[':
+            tokenKind = STRAIGHTBRACEOPEN
+        case ']':
+            tokenKind = STRAIGHTBRACECLOSE
+        case '(':
+            tokenKind = PARENOPEN
+        case ')':
+            tokenKind = PARENCLOSE
+        case '`':
+            tokenKind = BACKTICK
+        default:
+            var res strings.Builder
+
+        out:
+            for {
+                switch s.curChar {
+                case '\n', '!', '#', '_', '*', '-', '[', ']', '(', ')', '`', '>':
+                    break out
+                }
+
+                res.WriteRune(s.curChar)
+                s.advance()
+            }
+
+			if res.Len() != 0 {
+				s.addToken(TEXT, res.String())
+			}
+
+			continue
+        }
+        s.addToken(tokenKind, "")
+        s.advance()
+    }
+}
+```
+
+This change skips all scanned token which have a string of length 0.
+The `continue` at the end skips adding the token again in line 56, due to the fact that we already added the token in line 51 if it is not empty.
+
 ## Tests
 
-- tests to check if our result is consistent
+While lexing we need to check if we get the output right and correct. Go supports testing code with a built-in module.
+To test simply create a new file in the `scanner` directory, named `scanner_test.go`.:
+
+```go
+// scanner/scanner_test.go
+package scanner
+
+import "testing"
+
+func TestExample(t *testing.T) {
+    s := New("./markdown.md")
+    s.Lex()
+    tokens := s.Tokens()
+}
+```
+
+The `_test` suffix is important, otherwise the `go test` command won't recognize the file and therefore the tests in it.
+
+For this test to work the `markdown.md` file needs to be created in the `scanner/` directory. Fill it with the example we already used before:
+
+```markdown
+### Heading 3
+```
+
+Now we can append the following to our `TestExample` function:
+
+```go {hl_lines=["11-21"]}
+// scanner/scanner_test.go
+package scanner
+
+import "testing"
+
+func TestExample(t *testing.T) {
+    s := New("./markdown.md")
+    s.Lex()
+    tokens := s.Tokens()
+
+    expectedTokens := []uint {
+        HASH,
+        HASH,
+        HASH,
+        TEXT,
+        NEWLINE,
+    }
+
+    if len(tokens) != len(expectedTokens) {
+		t.Errorf("expected %d tokens, got: %d", len(expectedTokens), len(tokens))
+	}
+}
+```
+
+We define the token kinds we expect in the `expectedTokens` array, after that we compare the length of the tokens we got after scanning and the length of the array we just defined. If they didn't match we did something wrong.
+
+To check if all tokens we matched are correct we need to loop over them to check if the current token we expect matches the current token we scanned:
+
+```go {hl_lines=["23-29"]}
+// scanner/scanner_test.go
+package scanner
+
+import "testing"
+
+func TestExample(t *testing.T) {
+    s := New("./markdown.md")
+    s.Lex()
+    tokens := s.Tokens()
+
+    expectedTokens := []uint {
+        HASH,
+        HASH,
+        HASH,
+        TEXT,
+        NEWLINE,
+    }
+
+    if len(tokens) != len(expectedTokens) {
+		t.Errorf("expected %d tokens, got: %d", len(expectedTokens), len(tokens))
+	}
+
+    for i, token := range tokens {
+		if expectedTokens[i] != token.Kind {
+			t.Errorf("expected %d [%s], got %d [%s] for token %d",
+				expectedTokens[i], TOKEN_LOOKUP_MAP[expectedTokens[i]], token.Kind, TOKEN_LOOKUP_MAP[token.Kind], i,
+			)
+		}
+	}
+}
+```
+
+So thats it, now you are able to write a lexer for markdown and test if everything worked out correctly.
