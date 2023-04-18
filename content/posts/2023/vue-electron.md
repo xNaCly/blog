@@ -21,13 +21,17 @@ Documentation:
 
 ```bash
 # install and run vue scaffholding tool
-npm run vue@latest
+npm init vue@latest
 # replace <project-name> with the name you specified
 cd <project-name>
 # install dependecies
 yarn
+# or
+npm
 # start dev server
 yarn dev
+# or
+npm run dev
 ```
 
 This should output:
@@ -46,6 +50,8 @@ Navigating to `localhost:<port>` (take a look at the port in the console output)
 ```bash
 # install electron as a dev dependecy
 yarn add -D electron@latest
+# or
+npm install --save-dev electron
 ```
 
 Create and open `main.js` at the root of your project. Paste the following into it:
@@ -144,6 +150,8 @@ To package our application we will use `electron-forge`.
 1. Installing electron forge
    ```bash
    yarn add -D @electron-forge/cli
+   # or
+   npm install --save-dev @electron-forge/cli
    ```
 2. Importing the project into electron forge
    ```bash
@@ -152,6 +160,8 @@ To package our application we will use `electron-forge`.
 3. Packaging the application
    ```bash
    yarn package
+   # or
+   npm run package
    ```
 
 Navigate to `<project>/out/<project>-<os>-<arch>`, here you can find the generated files for the project.
@@ -222,6 +232,7 @@ To develop in an electron instance, add the following to your `package.json`:
 ```
 
 Now run `yarn dev:build` in one terminal and `yarn start` in an other terminal.
+
 - the first watches for changes and rebuilds the vue.js project once changes are detected.
 - the second terminal starts the electron instance containing your project
 
