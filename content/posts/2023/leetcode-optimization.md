@@ -12,10 +12,10 @@ tags:
 While i dislike the whole idea around grinding leetcode puzzles as much as possible,
 i still like the challenge of thinking about a problem and correcting the implementation with a [TDD](https://en.wikipedia.org/wiki/Test-driven_development) approach.
 
-The third approach runs with 0ms runtime and 2.1MB memory usage, this beats 100% and 80% of all solutions, [source](https://leetcode.com/problems/replace-all-s-to-avoid-consecutive-repeating-characters/submissions/948070040/).
+The third implementation runs with 0ms runtime and 2.1MB memory usage, this beats 100% and 80% of all solutions, [source](https://leetcode.com/problems/replace-all-s-to-avoid-consecutive-repeating-characters/submissions/948070040/).
 {{</callout>}}
 
-This article highlights three different approaches to solving the puzzle [1576](https://leetcode.com/problems/replace-all-s-to-avoid-consecutive-repeating-characters/) while explaining common performance issues in go applications.
+This article highlights three different approaches to solving the puzzle [1576](https://leetcode.com/problems/replace-all-s-to-avoid-consecutive-repeating-characters/).
 
 The puzzle is fairly easy, the expected input is a string made up of lowercase alphabetical characters, as well as containing a question mark (`?`). This character should be replaced with an alphabetical character and should not be repeated consecutively.
 
@@ -303,7 +303,7 @@ We have some obvious performance issues in this version of the code:
 
 ## Third implementation
 
-The third and heavly optimized version decreases the time taken for every operation by a factor of 2.
+The third and heavly optimized version decreases the time taken for every operation by a factor of 2 compared to the first implementation.
 
 ```go
 func modifyStringThird(s string) string {
@@ -391,22 +391,26 @@ go test ./... -bench=.
 # goarch: amd64
 # pkg: leetcode
 # cpu: AMD Ryzen 7 3700X 8-Core Processor
-# BenchmarkFirst/size10-16                 2190549               549.3 ns/op
-# BenchmarkFirst/size100-16                 339276              3493 ns/op
-# BenchmarkFirst/size1000-16                 35902             33687 ns/op
-# BenchmarkFirst/size10000-16                 3735            322307 ns/op
+# BenchmarkFirst/size10-16                 2185942               547.2 ns/op
+# BenchmarkFirst/size100-16                 337184              3487 ns/op
+# BenchmarkFirst/size1000-16                 35896             33587 ns/op
+# BenchmarkFirst/size10000-16                 3548            322588 ns/op
+# BenchmarkFirst/size100000-16                 352           3424906 ns/op
 
-# BenchmarkSecond/size10-16                2002407               598.8 ns/op
-# BenchmarkSecond/size100-16                299724              3919 ns/op
-# BenchmarkSecond/size1000-16                31893             37254 ns/op
-# BenchmarkSecond/size10000-16                3342            354169 ns/op
+# BenchmarkSecond/size10-16                1998387               601.3 ns/op
+# BenchmarkSecond/size100-16                298550              3909 ns/op
+# BenchmarkSecond/size1000-16                32400             37335 ns/op
+# BenchmarkSecond/size10000-16                3280            356697 ns/op
+# BenchmarkSecond/size100000-16                318           3777205 ns/op
 
-# BenchmarkThird/size10-16                 3057144               391.4 ns/op
-# BenchmarkThird/size100-16                 594561              1911 ns/op
-# BenchmarkThird/size1000-16                 74427             17185 ns/op
-# BenchmarkThird/size10000-16                 7581            158662 ns/op
+# BenchmarkThird/size10-16                 3076419               393.0 ns/op
+# BenchmarkThird/size100-16                 576669              1978 ns/op
+# BenchmarkThird/size1000-16                 64304             18599 ns/op
+# BenchmarkThird/size10000-16                 7867            156845 ns/op
+# BenchmarkThird/size100000-16                 636           1938507 ns/op
+
 # PASS
-# ok      leetcode        16.998s
+# ok      leetcode        21.463s
 ```
 
 Comparing the output shows us that the second implementation is a bit slower than the first and the third implementation is around 2x faster than the first implementation:
