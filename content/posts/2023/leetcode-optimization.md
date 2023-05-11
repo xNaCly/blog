@@ -9,8 +9,10 @@ tags:
 ---
 
 {{<callout type="Info">}}
-While i dislike the whole idea around doing as many leetcode puzzles as possible to get a job,
+While i dislike the whole idea around grinding leetcode puzzles as much as possible,
 i still like the challenge of thinking about a problem and correcting the implementation with a [TDD](https://en.wikipedia.org/wiki/Test-driven_development) approach.
+
+The third approach runs with 0ms runtime and 2.1MB memory usage, this beats 100% and 80% of all solutions, [source](https://leetcode.com/problems/replace-all-s-to-avoid-consecutive-repeating-characters/submissions/948070040/).
 {{</callout>}}
 
 This article highlights three different approaches to solving the puzzle [1576](https://leetcode.com/problems/replace-all-s-to-avoid-consecutive-repeating-characters/) while explaining common performance issues in go applications.
@@ -21,7 +23,7 @@ For example:
 
 ```text
 "?zs" -> "azs"
-"ubv?w" -> "ubv?w"
+"ubv?w" -> "ubvaw"
 "j?qg??b" -> "jaqgacb"
 ```
 
