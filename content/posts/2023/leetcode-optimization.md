@@ -350,6 +350,7 @@ var inputSizes = map[string]int{
 	"size100":   100,
 	"size1000":  1000,
 	"size10000": 10000,
+	"size100000": 100000,
 }
 
 func BenchmarkFirst(b *testing.B) {
