@@ -84,9 +84,9 @@ sophia -exp '[+ 1 "b"]'
 - [i stole the `.` from forth](<https://en.wikipedia.org/wiki/Forth_(programming_language)#%E2%80%9CHello,_World!%E2%80%9D>)
 - expressions (everything between `[]`) are evaluated right to left, for
   instance the power operator is evaluated like so:
-  1. assign first child of the power expression to a variable called `result`
-  2. raise the `result` to the power of the next child and assign the result to `result`
-  3. profit (not really)
+  1. Assign first child of the power expression to a variable called `result`
+  2. Raise the `result` to the power of the next child and assign the result to `result`
+  3. Profit (not really)
 - all operators (the first token in `[]`) are single character
 
 As one can see my to-do list is full for the next few months.
@@ -131,7 +131,7 @@ Not only will you have to use data structures when implementing your
 programming language, but you will have to understand and use them to have a
 somewhat good time.
 
-For data structures I can recommend the course [The Last Algorihms Course
+For data structures I can recommend the course [The Last Algorithms Course
 You'll Need](https://frontendmasters.com/courses/algorithms/) by
 [ThePrimeagen](https://frontendmasters.com/teachers/the-primeagen/) or [A
 Programmer's Guider to Computer Science
@@ -148,10 +148,10 @@ referring to the useful design patters, such as:
 
 I use the iterator pattern to iterate over tokens and
 [ast](https://en.wikipedia.org/wiki/Abstract_syntax_tree)-Nodes. I make use of
-the visitor pattern to invoke the `.Eval()` function on the root of the ast,
-which will then evaluted all nodes until the leaf is hit. This creates a clean
-and nice looking code base and keeps the mental overhead low, because i can
-focus on one thing at a time.
+the visitor pattern to invoke the `.Eval()` function on the root of the AST,
+which will then evaluate all nodes until the leaf is hit. This creates a clean
+and nice looking code base and keeps the mental overhead low by separating
+creation and evaluation.
 
 ### Understanding the basics
 
@@ -159,7 +159,7 @@ The thing I love most about tinkering with implementing a programming language
 is the theory behind it. Lexical and syntax analysis, parsing the
 token stream to an abstract syntax tree and evaluating it is just a lot of fun.
 
-When implementing your programming language you will learn about:
+When implementing a programming language you will learn about:
 
 - lexical analysis (assigning meaning to characters)
 - syntax analysis (checking if the lexed / scanned stream matches the grammar you desire)
@@ -175,6 +175,6 @@ For writing interpreters i can recommend:
 - [Writing An Interpreter in Go by Thorsten Ball](https://interpreterbook.com/) (go)
 - [Crafting Interpreters by Robert Nystrom](https://craftinginterpreters.com/) (java & c)
 
-For reading about the theory behind programming i can recommend the dragon book:
+For reading about the theory behind writing programming languages i can recommend the dragon book:
 
 - [Compilers: Principles, Techniques, and Tools](https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools)
