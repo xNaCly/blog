@@ -1,6 +1,6 @@
 ---
 title: "You Should Write Your Own Programming Language"
-summary: "Why i think you shoudl write your own programming language"
+summary: "Why i think you should write your own programming language"
 date: 2023-07-24
 tags:
   - lisp
