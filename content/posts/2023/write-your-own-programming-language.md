@@ -128,8 +128,8 @@ You probably are implementing a tree walk interpreter, for this to work you are
 building a tree out of scanned tokens, which also is a data structure.
 
 Not only will you have to use data structures when implementing your
-programming language, but you will have to understand and use them to have a
-somewhat good time.
+programming language, but you will have to understand and use them correctly to
+have a somewhat good time.
 
 For data structures I can recommend the course [The Last Algorithms Course
 You'll Need](https://frontendmasters.com/courses/algorithms/) by
