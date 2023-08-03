@@ -2,6 +2,7 @@
 title: Leetcode Optimization and Go
 summary: Solving and optimizing a leetcode puzzle in three ways
 date: 2023-05-11
+
 tags:
   - go
   - performance
@@ -11,14 +12,20 @@ tags:
 While i dislike the whole idea around grinding leetcode puzzles as much as possible,
 i still like the challenge of thinking about a problem and correcting the implementation with a [TDD](https://en.wikipedia.org/wiki/Test-driven_development) approach.
 
-The third implementation runs with 0ms runtime and 2.1MB memory usage, this beats 100% and 80% of all solutions, [source](https://leetcode.com/problems/replace-all-s-to-avoid-consecutive-repeating-characters/submissions/948070040/).
+The third implementation runs with 0ms runtime and 2.1MB memory usage, this
+beats 100% and 100% of all solutions,
+[source](https://leetcode.com/problems/replace-all-s-to-avoid-consecutive-repeating-characters/submissions/1010937929/).
 
 The source code for this puzzle can be found [here](https://github.com/xNaCly/leet/blob/master/go/1576.go).
 {{</callout>}}
 
-This article highlights three different approaches to solving the puzzle [1576](https://leetcode.com/problems/replace-all-s-to-avoid-consecutive-repeating-characters/).
+This article highlights three different approaches to solving the puzzle
+[1576](https://leetcode.com/problems/replace-all-s-to-avoid-consecutive-repeating-characters/).
 
-The puzzle is fairly easy, the expected input is a string made up of lowercase alphabetical characters, as well as containing a question mark (`?`). This character should be replaced with an alphabetical character and should not be repeated consecutively.
+The puzzle is fairly easy, the expected input is a string made up of lowercase
+alphabetical characters, as well as containing a question mark (`?`). This
+character should be replaced with an alphabetical character and should not be
+repeated consecutively.
 
 For example:
 
@@ -28,7 +35,10 @@ For example:
 "j?qg??b" -> "jaqgacb"
 ```
 
-To implement this, we loop over the characters, check if the current character is a question mark, choose the `a` as a replacement, check if the previous character is `a` or the following character is `a`, if so we move on to the next character.
+To implement this, we loop over the characters, check if the current character
+is a question mark, choose the `a` as a replacement, check if the previous
+character is `a` or the following character is `a`, if so we move on to the
+next character.
 
 The logic in the loop can be visualized via a flow chart:
 
@@ -329,14 +339,51 @@ func modifyStringThird(s string) string {
 }
 ```
 
-This version uses the optimization we already applied in the second approach (offset instead of rune lookup) plus computing the length of the input and the byte array outside of the rune computing loop.
+This version uses the optimization we already applied in the second approach
+(offset instead of rune lookup) plus computing the length of the input and the
+byte array outside of the rune computing loop.
 
-This approach reduces the type conversions inside of the computing loop from 3 to 0, and inside the input loop to 1.
-It also does not call any functions inside the computation loop, such as the `strings.Builder.Len()` or the `len(s)` methods.
+This approach reduces the type conversions inside of the computing loop from 3
+to 0, and inside the input loop to 1. It also does not call any functions
+inside the computation loop, such as the `strings.Builder.Len()` or the
+`len(s)` methods.
+
+{{<callout type="Upate">}}
+
+## Forth implementation
+
+The forth implementation differs from the third in omitting a cast and a
+function call in the top level loop by moving the byte cast to the loop
+definition, as well as assigning the result to the byte array at the current
+index instead of appending to it. This halves the ns/op the third
+implementation needs to execute the same operation.
+
+```go
+func modifyString(s string) string {
+    ls := len(s)
+    b := make([]byte, ls)
+    for i, r := range []byte(s) {
+        if r == '?' {
+            var rr byte
+            for (i > 0 && rr+97 == b[i-1])
+                    || (ls > i+1 && rr+97 == s[i+1]) {
+                rr++
+            }
+            r = rr + 97
+        }
+        b[i] = r
+    }
+    return string(b)
+}
+```
+
+{{</callout>}}
 
 ## Benchmarks
 
-To show the difference between the approaches, i created three benchmarks via the [testing](https://pkg.go.dev/testing@go1.20.4#hdr-Benchmarks) framework included in gos std lib:
+To show the difference between the approaches, i created three benchmarks via
+the [testing](https://pkg.go.dev/testing@go1.20.4#hdr-Benchmarks) framework
+included in gos std lib:
 
 ```go
 package main
@@ -418,3 +465,24 @@ go test ./... -bench=.
 Comparing the output shows us that the second implementation is a bit slower than the first and the third implementation is around 2x faster than the first implementation:
 
 ![benchmark](/leetcode/Benchmark.png)
+
+{{<callout type="Update">}}
+
+I also added a benchmark for the above function:
+
+```go
+func BenchmarkForth(b *testing.B) {
+	for size, v := range inputSizes {
+		b.Run(size, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				modifyStringForth(strings.Repeat("j?qg??b", v))
+			}
+		})
+	}
+}
+```
+
+The updated benchmark, including the forth implementation:
+
+![benchmark](/leetcode/Benchmark_new.png)
+{{</callout>}}
