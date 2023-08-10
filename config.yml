@@ -4,7 +4,6 @@ theme: xnacly
 canonifyURLs: true
 paginate: 4
 enableRobotsTXT: false
-enableGitInfo: true
 
 markup:
   highlight:
