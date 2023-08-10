@@ -1,68 +1,80 @@
 {
   "projects": [
     {
+      "title": "Sophia",
+      "description": "A small lisp inspired programming language with: Strings, Bools, Floats, Variables and Controlflow",
+      "url": "https://github.com/xNaCly/Sophia",
+      "tech": ["Go", "Lisp"]
+    },
+    {
       "title": "fleck",
       "description": "A minimal and highly optimized markdown2html converter, supports macros",
       "url": "https://github.com/xNaCly/fleck",
       "tech": ["Go", "Markdown", "HTML", "CSS"]
     },
-	{
+    {
+      "title": "go-jsonobfuscator",
+      "description": "A library for obfuscation and encryption of go structures and json objects",
+      "url": "https://github.com/iskre/go-jsonobfuscator/",
+      "tech": ["Go"]
+    },
+    {
       "title": "gleichzeitig",
-      "description": "Run shell scripts, commands and executables in parallel ",
+      "description": "Run shell scripts, commands and executables in parallel",
       "url": "https://github.com/xNaCly/gleichzeitig",
       "tech": ["Go", "Bash"]
     },
     {
       "title": "git-auto-sync",
-      "description": "highly configurable utility to commit and push to the remote origin every X minutes ⏰",
+      "description": "highly configurable utility to commit and push to the remote origin every X minutes",
       "url": "https://github.com/xNaCly/git-auto-sync",
       "tech": ["Git", "Go"]
     },
     {
       "title": "Dotfiles",
-      "description": "collection of my linux config files, including setup / installer script 💪",
+      "description": "collection of my linux config files, including setup / installer script",
       "url": "https://github.com/xNaCly/dotfiles",
       "tech": ["Shell", "Lua", "Python"]
     },
     {
       "title": "blog",
-      "description": "minimal staticly generated blog / portfolio, powered by hugo and a custom theme 🎨",
+      "description": "minimal staticly generated blog / portfolio, powered by hugo and a custom theme",
       "url": "https://github.com/xNaCly/blog",
       "tech": ["Hugo", "HTML", "CSS"]
     },
     {
       "title": "opus cli",
-      "description": "simple to-do list manager, written for the terminal, designed for powerusers ⚡",
+      "description": "simple to-do list manager, written for the terminal, designed for powerusers",
       "url": "https://github.com/xNaCly/opusCli",
       "tech": ["Rust", "SQLite"]
     },
     {
       "title": "c_paket",
-      "description": "fast and efficient source based package manager for the c programming language 📦",
+      "description": "fast and efficient source based package manager for the c programming language",
       "url": "https://github.com/xNaCly/c_paket",
       "tech": ["C", "Gcc", "Make"]
     },
     {
       "title": "pgmE",
-      "description": "extremely fast, small and efficient editor which implements the pgm standard 📷",
+      "description": "extremely fast, small and efficient editor which implements the pgm standard",
       "url": "https://github.com/xNaCly/pgmE",
       "tech": ["C", "Gcc", "Make"]
     },
     {
       "title": "better-issues",
-      "description": "cdn to render github issues and readmes as images using puppeteer 📑",
+      "description": "cdn to render github issues and readmes as images using puppeteer",
       "url": "https://github.com/xNaCly/better-issues",
       "tech": ["Javascript", "Node.js", "Puppeteer"]
     },
     {
       "title": "xc",
-      "description": "implementation of the gnu coreutil wordcount (wc) tool in various languages 🧾",
+      "description": "implementation of the gnu coreutil wordcount (wc) tool in various languages",
       "url": "https://github.com/xNaCly/xc",
       "tech": ["C", "Go", "Rust", "Java", "Python"]
     },
     {
       "title": "Portfolio v1",
-      "description": "first iteraton of my portfolio, uses nuxt-content for the blog, written in vue 🕸",
+      "description": "first iteraton of my portfolio, uses nuxt-content for the blog, written in vue",
       "url": "https://github.com/xNaCly/portfolio",
       "tech": ["Vue.js", "nuxt", "Javascript"]
     }
