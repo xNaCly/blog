@@ -5,7 +5,6 @@ summary: "Implementing a Rust like Result type for and in c"
 tags:
   - c
   - SeaScript
-draft: true
 ---
 
 While working on [SeaScript](https://github.com/xNaCly/SeaScript) - a small
