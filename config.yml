@@ -7,7 +7,7 @@ enableRobotsTXT: false
 
 markup:
   highlight:
-    style: dracula
+    style: gruvbox
     lineNos: true
     lineNumbersInTable: false
   tableOfContents:
