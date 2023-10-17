@@ -249,9 +249,9 @@ Lets now take a look at the bytecode our previous example compiles to:
     OP_ADD     :: 1.000000
 ```
 
-Notice the `OP_LOAD` we introduced before? The left hand side of each line is
-the operation the virtual machine is executing, the right hand side is the
-argument of the operation, sides are separated with `::`.
+The left hand side of each line is the operation the virtual machine is
+executing, the right hand side is the argument of the operation, sides are
+separated with `::`.
 
 This should suffice as a high level overview over the steps we want to take
 until we reach the integer result of our expression, starting from the source
@@ -259,7 +259,86 @@ code, tokenizing, parsing, compiling and executing bytecode.
 
 ## Project setup
 
+{{<callout type="Tip">}}
+All code snippets used in this series start with a comment specifying the file
+it points to. Code not relevant to the current topic is omitted but still
+notated using `[...]`.
+
+```go
+// main.go
+package main
+
+// [...]
+
+func main() { }
+```
+
+If a new file should be created this will be explicitly stated.
+
+Code snippets starting with a `$` must be executed in a shell:
+
+```text
+$ echo "This is a shell"
+```
+
+{{</callout>}}
+
+1. Creating a directory for our project:
+
+   ```text
+   $ mkdir calc
+   ```
+
+2. Entry point
+
+   Using go we can start with the bare minimum a project requires:
+
+   ```go
+   // main.go
+   package main
+
+   import "fmt"
+
+   func main() {
+       fmt.Println("Hello World!")
+   }
+   ```
+
+   Running the above via `go run .` requires the creation of the projects
+   `go.mod` file:
+
+3. Initialising the project
+
+   ```text
+   $ go mod init calc
+   ```
+
+4. Building and running the source code
+
+   ```text
+   $ go run .
+   Hello World!
+   ```
+
+All of our source code will live in the root of the project. Currently we have
+`main.go` and `go.mod` in the root of our project.
+
 ## Test driven development
+
+{{<callout type="Info">}}
+Test driven development refers to the process of defining a problem domain for
+a function, creating the corresponding test, preferably with as much edge cases
+as possible and incrementing the implementation of the function to satisfy all
+test cases.
+{{</callout>}}
+
+As we are implementing an interpreter both the input to our function and the
+output of our function is known and therefore easily representable with tests
+which screams we should use TDD and iterate until all tests are passing.
+
+### Test setup
+
+### Table driven tests
 
 ## Tokenizing
 
