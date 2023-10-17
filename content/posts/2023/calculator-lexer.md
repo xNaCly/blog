@@ -534,9 +534,131 @@ FAIL
 
 ### Debugging
 
-### Getting input
+If we try to print our `Token` structure we will see the `Token.Type` as an
+integer, for example:
+
+```go
+package main
+
+func main() {
+    t := Token{Type: TOKEN_NUMBER, Raw: "12"}
+    fmt.Printf("Token{Type: %d, Raw: %s}\n", t.Type, t.Raw)
+}
+```
+
+This would of course not result in the output we want, due to the enum defining
+token types as integers:
+
+```text
+$ go run .
+Token{Type: 2, Raw: 12}
+```
+
+Therefore we add the `TOKEN_LOOKUP` hash map:
+
+```go
+// lexer.go
+package main
+
+// [...] imports
+
+// [...] token types generation
+
+var TOKEN_LOOKUP = map[int]string{
+	TOKEN_UNKNOWN:     "UNKNOWN",
+	TOKEN_NUMBER:      "TOKEN_NUMBER",
+	TOKEN_PLUS:        "TOKEN_PLUS",
+	TOKEN_MINUS:       "TOKEN_MINUS",
+	TOKEN_ASTERISK:    "TOKEN_ASTERISK",
+	TOKEN_SLASH:       "TOKEN_SLASH",
+	TOKEN_BRACE_LEFT:  "TOKEN_BRACE_LEFT",
+	TOKEN_BRACE_RIGHT: "TOKEN_BRACE_RIGHT",
+	TOKEN_EOF:         "EOF",
+}
+```
+
+{{<callout type="Tip">}}
+With vim the above is extremly easy to generate, simply copy the before defined
+types of tokens, paste them into the map, remove `= iota +1`, whitespace and
+comments. Afterwards mark them again with `Shift+v`. Now regex all over the
+place by typing `:'<,'>s/\([A-Z_]\+\)/\1: "\1",`, this creates a capture group
+for all upper case characters found one or more times, this group is reused in
+the substitute replace part of the command (second part of the command,
+infix split by `/`) and replaces all `\1` with the captured name, thus
+filling the map.
+{{</callout>}}
+
+If we were to now update our previous example to using the new `TOKEN_LOOKUP`
+map we notice it now works correctly:
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	t := Token{Type: TOKEN_NUMBER, Raw: "12"}
+	fmt.Printf("Token{Type: %s, Raw: %s}\n", TOKEN_LOOKUP[t.Type], t.Raw)
+}
+```
+
+```text
+$ go run .
+Token{Type: TOKEN_NUMBER, Raw: 12}
+```
 
 ### Creating the Lexer
+
+After establishing our debug capabilities we now can move on to creating the
+`Lexer` and defining our tokenisers API:
+
+```go
+// lexer.go
+package main
+
+// [...] Imports, token types, token struct, TOKEN_LOOKUP map
+
+type Lexer struct {
+	scanner bufio.Reader
+	cur     rune
+}
+
+func NewLexer(reader io.Reader) *Lexer { }
+
+func (l *Lexer) Lex() []Token { }
+
+func (l *Lexer) number() Token { }
+
+func (l *Lexer) advance() { }
+```
+
+The `Lexer` structure holds a scanner we will create in the `NewLexer` function
+this function accepts an unbuffered reader which we will wrap into a buffered
+reader for stepping trough the source in an optimized fashion. The function
+returns a Lexer structure. The `cur` field holds the current character.
+
+The `Lexer.Lex` method is the heart of the tokeniser it iterates over all
+characters in the buffered reader and tries to recognize structures.
+
+The `Lexer.number` method is called when an number is detected, it then iterates until the current character is no longer a part of a number
+
+{{<callout type="Tip">}}
+
+#### Definitions
+
+- Method vs function -> I refer to standalone functions as functions - to
+  functions attached to structures as methods Thus `NewLexer` is a function and
+  `Lexer.Lex` is a method. But to each their own - I don't really care 😼.
+
+- Number vs integer vs digit -> Here I define a number as 1 or more characters
+  between 0 and 9, I extend this definition with `e`, `.` and `_` in between
+  the first number and all following numbers. Thus I consider the following numbers as valid for this interpreter:
+  - `1e5`
+  - `12.5`
+  - `0.5`
+  - `5_000_000`
+
+{{</callout>}}
 
 ### Advancing in the Input
 
