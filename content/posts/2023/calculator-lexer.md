@@ -273,7 +273,7 @@ package main
 func main() { }
 ```
 
-If a new file should be created this will be explicitly stated.
+If a new file should be created it will be explicitly stated.
 
 Code snippets starting with a `$` must be executed in a shell:
 
@@ -334,17 +334,207 @@ test cases.
 
 As we are implementing an interpreter both the input to our function and the
 output of our function is known and therefore easily representable with tests
-which screams we should use TDD and iterate until all tests are passing.
-
-### Test setup
-
-### Table driven tests
+which screams we should use TDD and iterate until all tests are passing. We
+will create our tests once we defined the different kinds a token can represent
+and the `Token` structure.
 
 ## Tokenizing
 
+Leaving the above behind, lets now get to the gist of this part of the series:
+the tokeniser. Our main goal is to step through the source code we input and
+convert it to different tokens and afterwards spitting out this list of tokens.
+
+Lets get started, create a new file in the projects directory, beside `main.go`
+and `go.sum` called `lexer.go`:
+
+```go
+// lexer.go
+package main
+```
+
+For now this will be enough, we will fill this file with content in the
+following sections.
+
 ### Token and Types of Token
 
+In the classical sense a lexical token refers to a list of characters with an
+assigned meaning, see [lexical token and lexical
+tokenisation](https://en.wikipedia.org/wiki/Lexical_analysis#Lexical_token_and_lexical_tokenization)
+and remember the first step of the [example](#lexical-analysis).
+
+To define the meaning we attach to this list of characters we will define a
+list of possible meanings we want to support in our interpreter, remember our
+[problem domain](#problem-domain).
+
+```go
+// lexer.go
+package main
+
+const (
+    TOKEN_UNKNOWN = iota + 1
+
+    TOKEN_NUMBER
+
+    // symbols
+	TOKEN_PLUS
+	TOKEN_MINUS
+	TOKEN_ASTERISK
+	TOKEN_SLASH
+
+    // structure
+	TOKEN_BRACE_LEFT
+	TOKEN_BRACE_RIGHT
+
+	TOKEN_EOF
+)
+```
+
+{{<callout type="Iota - the Go way of doing enums">}}
+Go does not have enums, it has `iota`, see the go spec
+[here](https://go.dev/ref/spec#Iota). Its not a particularly good system but
+its good enough for our use case - it basically increments all consts by 1 in a
+const block starting from 0. Therefore `TOKEN_UNKNOWN` is set to 1 and
+`TOKEN_EOF` to 9.
+{{</callout>}}
+
+We will now define the structure holding the detected structure, its type and its raw value:
+
+```go
+// lexer.go
+package main
+
+// [...] token kind definition
+
+type Token struct {
+    Type int
+    Raw  string
+}
+```
+
+We defined the structure to hold tokens we found in the source code and their types.
+
+### Tests
+
+Now lets get started with writing tests. Per [go
+convention](https://pkg.go.dev/testing) we create a new file postfixed with
+`_test.go`. This `lexer_test.go` file contains all tests for the tokeniser and
+exists beside all previously created files in the root of the directory.
+
+So lets create the foundation for our tests - we will make use of an idea
+called [table driven
+tests](https://dave.cheney.net/2019/05/07/prefer-table-driven-tests):
+
+```go
+// lexer_test.go
+package main
+
+import (
+    "testing"
+    "strings"
+)
+
+func TestLexer(t *testing.T) {
+    tests := []struct{
+        In string
+        Out []Token
+    }{}
+    for _, test := range tests {
+        t.Run(test.In, func(t *testing.T) {
+            in := strings.NewReader(test.In)
+			out := NewLexer(in).Lex()
+			compareSlices(t, out, test.Out)
+        })
+    }
+}
+```
+
+We need a helper method called `compareSlices` which as inferable by its name
+helps us to make sure two slices are equal. We insert the function after the
+imports and before our `TestLexer` function. This function uses generics to
+assert both slices are of the same type and that type is comparable.
+
+```go
+// lexer_test.go
+package main
+
+import (
+    "testing"
+    "strings"
+)
+
+func compareSlices[T comparable](t *testing.T, a []T, b []T) {
+	if len(a) != len(b) {
+        t.Errorf("%v != %v", a, b)
+	}
+	for i, e := range a {
+		if e != b[i] {
+            t.Errorf("%v != %v", a, b)
+		}
+	}
+}
+
+func TestLexer(t *testing.T) { /* [...] */ }
+```
+
+Lets add our first test - an edge case - specifically the case of an empty
+input for which we expect only one structure `Token` with `Token.Type:
+TOKEN_EOF` in the resulting token list.
+
+```go {hl_lines=["25-30"]}
+// lexer_test.go
+package main
+
+import (
+    "testing"
+    "strings"
+)
+
+func compareSlices[T comparable](t *testing.T, a []T, b []T) {
+	if len(a) != len(b) {
+        t.Errorf("%v != %v", a, b)
+	}
+	for i, e := range a {
+		if e != b[i] {
+            t.Errorf("%v != %v", a, b)
+		}
+	}
+}
+
+func TestLexer(t *testing.T) {
+    tests := []struct{
+        In string
+        Out []Token
+    }{
+        {
+            In: "",
+            Out: []Token{
+                {Type: TOKEN_EOF, Raw: "TOKEN_EOF"},
+            },
+        },
+    }
+    for _, test := range tests {
+        t.Run(test.In, func(t *testing.T) {
+            in := strings.NewReader(test.In)
+			out := NewLexer(in).Lex()
+			compareSlices(t, out, test.Out)
+        })
+    }
+}
+```
+
+Running our tests with `go test ./... -v` will result in an error simply because we have not yet defined our Lexer:
+
+```text
+$ go test ./... -v
+# calc [calc.test]
+./lexer_test.go:35:11: undefined: NewLexer
+FAIL    calc [build failed]
+FAIL
+```
+
 ### Debugging
+
+### Getting input
 
 ### Creating the Lexer
 
