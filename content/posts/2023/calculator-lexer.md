@@ -350,6 +350,13 @@ and `go.sum` called `lexer.go`:
 ```go
 // lexer.go
 package main
+
+import (
+	"bufio"
+	"io"
+	"log"
+	"strings"
+)
 ```
 
 For now this will be enough, we will fill this file with content in the
@@ -607,7 +614,7 @@ $ go run .
 Token{Type: TOKEN_NUMBER, Raw: 12}
 ```
 
-### Creating the Lexer
+### Lexer overview
 
 After establishing our debug capabilities we now can move on to creating the
 `Lexer` and defining our tokenisers API:
@@ -637,10 +644,15 @@ this function accepts an unbuffered reader which we will wrap into a buffered
 reader for stepping trough the source in an optimized fashion. The function
 returns a Lexer structure. The `cur` field holds the current character.
 
-The `Lexer.Lex` method is the heart of the tokeniser it iterates over all
+The heart of the tokeniser is the `Lexer.Lex` method. It iterates over all
 characters in the buffered reader and tries to recognize structures.
 
-The `Lexer.number` method is called when an number is detected, it then iterates until the current character is no longer a part of a number
+The `Lexer.number` method is called when an number is detected, it then
+iterates until the current character is no longer a part of a number and
+returns a `Token` structure.
+
+`Lexer.advance` requests the next character from the buffered scanner and sets
+`Lexer.cur` to the resulting charcter.
 
 {{<callout type="Tip">}}
 
@@ -660,7 +672,55 @@ The `Lexer.number` method is called when an number is detected, it then iterates
 
 {{</callout>}}
 
+### Creating the lexer
+
+As introduced before the `NewLexer` function creates the lexer:
+
+```go
+// lexer.go
+package main
+
+// [...] Imports, token types, token struct, TOKEN_LOOKUP map
+
+type Lexer struct {
+	scanner bufio.Reader
+	cur     rune
+}
+
+func NewLexer(reader io.Reader) *Lexer {
+	l := &Lexer{
+		scanner: *bufio.NewReader(reader),
+	}
+	l.advance()
+	return l
+}
+```
+
+This function accepts a reader, creates a new `Lexer` structure, converts the
+reader to a [buffered `Reader`](https://pkg.go.dev/bufio#Reader), assigns it to
+the `Lexer` structure and afterwards invokes the `Lexer.advance` function we
+will discuss in the next chapter.
+
 ### Advancing in the Input
+
+Stepping through the source code is as easy as requesting a new character from
+our buffered reader via the `bufio.Reader.ReadRune()` method:
+
+```go
+// lexer.go
+package main
+
+// [...]
+
+func (l *Lexer) advance() {
+	r, _, err := l.scanner.ReadRune()
+	if err != nil {
+		l.cur = 0
+	} else {
+		l.cur = r
+	}
+}
+```
 
 ### Ignoring white space
 
