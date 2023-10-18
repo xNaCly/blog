@@ -761,8 +761,6 @@ find while stepping through the source code. The while loop iterates until we
 hit the `EOF` by calling `*Lexer.advance()`. To indicate the ending of our
 token list we append a token of type `TOKEN_EOF` to the slice `t`.
 
-#### Rerunning tests
-
 After defining the `NewLexer` and the `*Lexer.Lex` we can try running our tests
 again:
 
@@ -782,9 +780,156 @@ Thus we know our lexer works correctly for empty inputs.
 
 Every good programming language ignores white space and so do we (looking at
 you [Python](https://peps.python.org/pep-0008/#code-lay-out)). White space is
-commonly defined as a new line: `'\n'`, a tab `'\t'` or a space `' '`.
+commonly defined as a new line: `'\n'` / `'\r'`, a tab `'\t'` or a space `' '`.
+
+Lets add a new test case called `whitespace` to our whitespace tests:
+
+```go{hl_lines=["13-19"]}
+// lexer_test.go
+package main
+
+// [...]
+
+func TestLexer(t *testing.T) {
+	tests := []struct {
+		Name string
+		In   string
+		Out  []Token
+	}{
+        // [...]
+		{
+			Name: "whitespace",
+			In:   "\r\n\t             ",
+			Out: []Token{
+				{TOKEN_EOF, "TOKEN_EOF"},
+			},
+		},
+	}
+    // [...]
+}
+```
+
+Having defined what we want as the output, lets get started with ignoring whitespace:
+
+To check if the current character matches any of the above we introduce
+a [switch case statement](https://go.dev/tour/flowcontrol/9):
+
+```go{hl_lines=["9-13"]}
+// lexer.go
+package main
+
+// [...]
+
+func (l *Lexer) Lex() []Token {
+	t := make([]Token, 0)
+	for l.cur != 0 {
+		switch l.cur {
+		case ' ', '\n', '\t', '\r':
+			l.advance()
+			continue
+        }
+
+        l.advance()
+	}
+	t = append(t, Token{
+		Type: TOKEN_EOF,
+		Raw:  "TOKEN_EOF",
+	})
+	return t
+}
+```
+
+Lets run our tests and check if everything worked out the way we wanted it to:
+
+```text
+$ go test ./... -v
+=== RUN   TestLexer
+=== RUN   TestLexer/empty_input
+=== RUN   TestLexer/whitespace
+--- PASS: TestLexer (0.00s)
+    --- PASS: TestLexer/empty_input (0.00s)
+    --- PASS: TestLexer/whitespace (0.00s)
+PASS
+ok      calc    0.001s
+```
+
+Seems like we ignored whitespace the right way 😼.
 
 ### Support for comments
+
+Lets add a very similar test as we added in the previous chapter to check if we ignore comments correctly:
+
+```go{hl_lines=["13-19"]}
+// lexer_test.go
+package main
+
+// [...]
+
+func TestLexer(t *testing.T) {
+	tests := []struct {
+		Name string
+		In   string
+		Out  []Token
+	}{
+        // [...]
+		{
+			Name: "comment",
+			In:   "# this is a comment\n# this is a comment without a newline at the end",
+			Out: []Token{
+				{TOKEN_EOF, "TOKEN_EOF"},
+			},
+		},
+	}
+    // [...]
+}
+```
+
+To ignore comments, we add a new case to our switch statement:
+
+```go{hl_lines=["10-14"]}
+// lexer.go
+package main
+
+// [...]
+
+func (l *Lexer) Lex() []Token {
+    // [...]
+	for l.cur != 0 {
+		switch l.cur {
+        case '#':
+			for l.cur != '\n' && l.cur != 0 {
+				l.advance()
+			}
+			continue
+		case ' ', '\n', '\t', '\r':
+			l.advance()
+			continue
+		}
+		l.advance()
+	}
+    // [...]
+}
+```
+
+We want our comments to start with `#`, therefore we enter the case if the
+current character is a `#`. Once in the case we call `*Lexer.advance()` until
+we either hit a newline or `EOF` - both causing the loop to stop.
+
+Lets again run our tests:
+
+```text
+$ go test ./... -v
+=== RUN   TestLexer
+=== RUN   TestLexer/empty_input
+=== RUN   TestLexer/whitespace
+=== RUN   TestLexer/comment
+--- PASS: TestLexer (0.00s)
+    --- PASS: TestLexer/empty_input (0.00s)
+    --- PASS: TestLexer/whitespace (0.00s)
+    --- PASS: TestLexer/comment (0.00s)
+PASS
+ok      calc    0.001s
+```
 
 ### Detecting special symbols
 
