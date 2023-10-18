@@ -65,6 +65,8 @@ domain is defined by a subset of arithmetic expressions:
 We will also support braces that can be used to indicate precedence, which we
 will talk about in the second post of this series.
 
+### Expressions
+
 Some examples of expression we will accept:
 
 ```python
@@ -442,11 +444,12 @@ import (
 
 func TestLexer(t *testing.T) {
     tests := []struct{
-        In string
-        Out []Token
+        Name string
+        In   string
+        Out  []Token
     }{}
     for _, test := range tests {
-        t.Run(test.In, func(t *testing.T) {
+        t.Run(test.Name, func(t *testing.T) {
             in := strings.NewReader(test.In)
 			out := NewLexer(in).Lex()
 			compareSlices(t, out, test.Out)
@@ -487,7 +490,7 @@ Lets add our first test - an edge case - specifically the case of an empty
 input for which we expect only one structure `Token` with `Token.Type:
 TOKEN_EOF` in the resulting token list.
 
-```go {hl_lines=["25-30"]}
+```go {hl_lines=["26-32"]}
 // lexer_test.go
 package main
 
@@ -509,10 +512,12 @@ func compareSlices[T comparable](t *testing.T, a []T, b []T) {
 
 func TestLexer(t *testing.T) {
     tests := []struct{
-        In string
-        Out []Token
+        Name string
+        In   string
+        Out  []Token
     }{
         {
+            Name: "empty input",
             In: "",
             Out: []Token{
                 {Type: TOKEN_EOF, Raw: "TOKEN_EOF"},
@@ -520,7 +525,7 @@ func TestLexer(t *testing.T) {
         },
     }
     for _, test := range tests {
-        t.Run(test.In, func(t *testing.T) {
+        t.Run(test.Name, func(t *testing.T) {
             in := strings.NewReader(test.In)
 			out := NewLexer(in).Lex()
 			compareSlices(t, out, test.Out)
@@ -715,14 +720,69 @@ package main
 func (l *Lexer) advance() {
 	r, _, err := l.scanner.ReadRune()
 	if err != nil {
-		l.cur = 0
-	} else {
-		l.cur = r
-	}
+        l.cur = 0
+    } else {
+        l.cur = r
+    }
 }
 ```
 
+The `ReadRune` function returns an error once the end of the file is hit, to
+indicate this to our `Lexer.Lex` function we will set the `Lexer.cur` field to
+`0`.
+
+{{<callout type="Tip">}}
+End of file is often refered to as `EOF`.
+{{</callout>}}
+
+We will now focus on the heart of the tokeniser: `Lexer.Lex()`:
+
+```go
+// lexer.go
+package main
+
+// [...]
+
+func (l *Lexer) Lex() []Token {
+	t := make([]Token, 0)
+	for l.cur != 0 {
+        l.advance()
+	}
+	t = append(t, Token{
+		Type: TOKEN_EOF,
+		Raw:  "TOKEN_EOF",
+	})
+	return t
+}
+```
+
+We firstly create a new slice of type `[]Token`, we will fill with tokens we
+find while stepping through the source code. The while loop iterates until we
+hit the `EOF` by calling `*Lexer.advance()`. To indicate the ending of our
+token list we append a token of type `TOKEN_EOF` to the slice `t`.
+
+#### Rerunning tests
+
+After defining the `NewLexer` and the `*Lexer.Lex` we can try running our tests
+again:
+
+```text
+$ go test ./... -v
+=== RUN   TestLexer
+=== RUN   TestLexer/empty_input
+--- PASS: TestLexer (0.00s)
+    --- PASS: TestLexer/empty_input (0.00s)
+PASS
+ok      calc    0.002s
+```
+
+Thus we know our lexer works correctly for empty inputs.
+
 ### Ignoring white space
+
+Every good programming language ignores white space and so do we (looking at
+you [Python](https://peps.python.org/pep-0008/#code-lay-out)). White space is
+commonly defined as a new line: `'\n'`, a tab `'\t'` or a space `' '`.
 
 ### Support for comments
 
