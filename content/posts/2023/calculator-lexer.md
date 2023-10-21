@@ -440,6 +440,8 @@ package main
 import (
     "testing"
     "strings"
+
+    "github.com/stretchr/testify/assert"
 )
 
 func TestLexer(t *testing.T) {
@@ -452,39 +454,29 @@ func TestLexer(t *testing.T) {
         t.Run(test.Name, func(t *testing.T) {
             in := strings.NewReader(test.In)
 			out := NewLexer(in).Lex()
-			compareSlices(t, out, test.Out)
+            assert.EqualValues(t, test.Out, out)
         })
     }
 }
 ```
 
-We need a helper method called `compareSlices` which as inferable by its name
-helps us to make sure two slices are equal. We insert the function after the
-imports and before our `TestLexer` function. This function uses generics to
-assert both slices are of the same type and that type is comparable.
+We use the `assert.EqualValues` function to compare our expected and the actual
+resulting arrays.
 
-```go
-// lexer_test.go
-package main
+{{<callout type="Tip">}}
+Including external packages in our project is a simple as running the following command:
 
-import (
-    "testing"
-    "strings"
-)
-
-func compareSlices[T comparable](t *testing.T, a []T, b []T) {
-	if len(a) != len(b) {
-        t.Errorf("%v != %v", a, b)
-	}
-	for i, e := range a {
-		if e != b[i] {
-            t.Errorf("%v != %v", a, b)
-		}
-	}
-}
-
-func TestLexer(t *testing.T) { /* [...] */ }
+```text
+$ go get <repo>
 ```
+
+For our example we want the `github.com/stretchr/testify/assert` package, thus we execute:
+
+```
+$ go get github.com/stretchr/testify/assert
+```
+
+{{</callout>}}
 
 Lets add our first test - an edge case - specifically the case of an empty
 input for which we expect only one structure `Token` with `Token.Type:
@@ -497,18 +489,9 @@ package main
 import (
     "testing"
     "strings"
-)
 
-func compareSlices[T comparable](t *testing.T, a []T, b []T) {
-	if len(a) != len(b) {
-        t.Errorf("%v != %v", a, b)
-	}
-	for i, e := range a {
-		if e != b[i] {
-            t.Errorf("%v != %v", a, b)
-		}
-	}
-}
+    "github.com/stretchr/testify/assert"
+)
 
 func TestLexer(t *testing.T) {
     tests := []struct{
@@ -528,7 +511,7 @@ func TestLexer(t *testing.T) {
         t.Run(test.Name, func(t *testing.T) {
             in := strings.NewReader(test.In)
 			out := NewLexer(in).Lex()
-			compareSlices(t, out, test.Out)
+            assert.EqualValues(t, test.Out, out)
         })
     }
 }
@@ -932,6 +915,111 @@ ok      calc    0.001s
 ```
 
 ### Detecting special symbols
+
+Having added tests for empty input, ignoring whitespace and comments, we will
+now add a new test for the symbols we want to recognize in out input:
+
+```go{hl_lines=["14-26"]}
+// lexer_test.go
+package main
+
+
+// [...]
+
+func TestLexer(t *testing.T) {
+	tests := []struct {
+		Name string
+		In   string
+		Out  []Token
+	}{
+        // [...]
+        {
+			Name: "symbols",
+			In:   "+-/*()",
+			Out: []Token{
+				{TOKEN_PLUS, "+"},
+				{TOKEN_MINUS, "-"},
+				{TOKEN_SLASH, "/"},
+				{TOKEN_ASTERISK, "*"},
+				{TOKEN_BRACE_LEFT, "("},
+				{TOKEN_BRACE_RIGHT, ")"},
+				{TOKEN_EOF, "TOKEN_EOF"},
+			},
+		},
+	}
+    // [...]
+}
+```
+
+Running our tests including the above at the current state of out
+implementation will result in the following `assert` Error:
+
+```text
+$ go test ./...
+--- FAIL: TestLexer (0.00s)
+    --- FAIL: TestLexer/symbols (0.00s)
+        lexer_test.go:56:
+                Error Trace:    ./lexer_test.go:56
+                Error:          Not equal:
+                                expected: []main.Token{main.Token{Type:3, Raw:"+"}, main.Token{Type:4, Raw:"-"}, main.Token{Type:6, Raw:"/"}, main.Token{Type:5, Raw:"*"}, main.Token{Type:7, Raw:"("}, main.Token{Type:8, Raw:")"}, main.Token{Type:9, Raw:"TOKEN_EOF"}}
+                                actual  : []main.Token{main.Token{Type:9, Raw:"TOKEN_EOF"}}
+// [...]
+                Test:           TestLexer/symbols
+FAIL
+FAIL    calc    0.004s
+FAIL
+```
+
+Implementing support for the symbols we want should fix this issue.
+
+Our first step towards this goal is to define a new variable called `ttype`
+holding the type of token we recognized:
+
+```go{hl_lines=["9"]}
+// lexer.go
+package main
+
+// [...]
+
+func (l *Lexer) Lex() []Token {
+    // [...]
+	for l.cur != 0 {
+        ttype := TOKEN_UNKNOWN
+        // [...]
+		l.advance()
+	}
+    // [...]
+}
+```
+
+We use this variable to insert detected tokens into our `t` array, if the value
+of `ttype` didn't change and is still `TOKEN_UNKNOWN` we display an error and exit:
+
+```go{hl_lines=["11-18"]}
+// lexer.go
+package main
+
+// [...]
+
+func (l *Lexer) Lex() []Token {
+    // [...]
+	for l.cur != 0 {
+        ttype := TOKEN_UNKNOWN
+        // [...]
+		if ttype != TOKEN_UNKNOWN {
+			t = append(t, Token{
+				Type: ttype,
+				Raw:  string(l.cur),
+			})
+		} else {
+			log.Fatalf("unknown %q in input", l.cur)
+		}
+
+		l.advance()
+	}
+    // [...]
+}
+```
 
 ### Support for integers and floating point numbers
 
