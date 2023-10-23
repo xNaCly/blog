@@ -975,7 +975,7 @@ Implementing support for the symbols we want should fix this issue.
 Our first step towards this goal is to define a new variable called `ttype`
 holding the type of token we recognized:
 
-```go{hl_lines=["9"]}
+```go{hl_lines=["10"]}
 // lexer.go
 package main
 
@@ -984,6 +984,7 @@ package main
 func (l *Lexer) Lex() []Token {
     // [...]
 	for l.cur != 0 {
+        // [...]
         ttype := TOKEN_UNKNOWN
         // [...]
 		l.advance()
@@ -995,15 +996,20 @@ func (l *Lexer) Lex() []Token {
 We use this variable to insert detected tokens into our `t` array, if the value
 of `ttype` didn't change and is still `TOKEN_UNKNOWN` we display an error and exit:
 
-```go{hl_lines=["11-18"]}
+```go{hl_lines=["16-23"]}
 // lexer.go
 package main
 
+import (
+    // [...]
+    "log"
+)
 // [...]
 
 func (l *Lexer) Lex() []Token {
     // [...]
 	for l.cur != 0 {
+        // [...]
         ttype := TOKEN_UNKNOWN
         // [...]
 		if ttype != TOKEN_UNKNOWN {
@@ -1021,6 +1027,123 @@ func (l *Lexer) Lex() []Token {
 }
 ```
 
+For now this concludes our error handling, not great - i know. Our next step is
+to add cases to our switch to react to differing characters:
+
+```go{hl_lines=["12-23"]}
+// lexer.go
+package main
+
+// [...]
+
+func (l *Lexer) Lex() []Token {
+    // [...]
+	for l.cur != 0 {
+        // [...]
+		switch l.cur {
+            // [...]
+        case '+':
+			ttype = TOKEN_PLUS
+		case '-':
+			ttype = TOKEN_MINUS
+		case '/':
+			ttype = TOKEN_SLASH
+		case '*':
+			ttype = TOKEN_ASTERISK
+		case '(':
+			ttype = TOKEN_BRACE_LEFT
+		case ')':
+			ttype = TOKEN_BRACE_RIGHT
+        }
+        // [...]
+		l.advance()
+	}
+    // [...]
+}
+```
+
+We can now once again run our tests:
+
+```text
+$ go test ./... -v
+calc master M :: go test ./... -v
+=== RUN   TestLexer
+=== RUN   TestLexer/empty_input
+=== RUN   TestLexer/whitespace
+=== RUN   TestLexer/comment
+=== RUN   TestLexer/symbols
+--- PASS: TestLexer (0.00s)
+    --- PASS: TestLexer/empty_input (0.00s)
+    --- PASS: TestLexer/whitespace (0.00s)
+    --- PASS: TestLexer/comment (0.00s)
+    --- PASS: TestLexer/symbols (0.00s)
+PASS
+ok      calc    0.003s
+```
+
+And we pass our tests, the only feature missing from our tokenizer is detecting
+numbers.
+
 ### Support for integers and floating point numbers
 
-## Wrapping up
+As introduced before i want to support numbers with several infixes, such as `_`, `e` and `.`.
+
+Go ahead and add some tests for these cases:
+
+```go
+// lexer_test.go
+package main
+
+
+// [...]
+
+func TestLexer(t *testing.T) {
+	tests := []struct {
+		Name string
+		In   string
+		Out  []Token
+	}{
+        // [...]
+        {
+			Name: "number",
+			In:   "123",
+			Out: []Token{
+				{TOKEN_NUMBER, "123"},
+				{TOKEN_EOF, "TOKEN_EOF"},
+			},
+		},
+		{
+			Name: "number with underscore",
+			In:   "10_000",
+			Out: []Token{
+				{TOKEN_NUMBER, "10_000"},
+				{TOKEN_EOF, "TOKEN_EOF"},
+			},
+		},
+		{
+			Name: "number with e",
+			In:   "10e5",
+			Out: []Token{
+				{TOKEN_NUMBER, "10e5"},
+				{TOKEN_EOF, "TOKEN_EOF"},
+			},
+		},
+		{
+			Name: "number with .",
+			In:   "0.005",
+			Out: []Token{
+				{TOKEN_NUMBER, "0.005"},
+				{TOKEN_EOF, "TOKEN_EOF"},
+			},
+		},
+	}
+    // [...]
+}
+```
+
+<!--TODO: implementing number support -->
+<!--TODO: run tests -->
+
+## Calling our Tokenizer
+
+<!--TODO: call tokenizer from main -->
