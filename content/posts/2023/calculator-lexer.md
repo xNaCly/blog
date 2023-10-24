@@ -5,7 +5,6 @@ date: 2023-10-16
 tags:
   - go
   - bytecode vm
-draft: true
 ---
 
 ## Introduction
@@ -19,7 +18,8 @@ the [ast](https://en.wikipedia.org/wiki/Abstract_syntax_tree), walking the ast
 / flatting it to byte code, [bytecode virtual
 machines](https://en.wikipedia.org/wiki/Bytecode) and
 [TDD](https://en.wikipedia.org/wiki/Test-driven_development) centered around
-compilers and interpreters.
+compilers and interpreters. The corresponding GitHub repository can be found
+[here](https://github.com/xNaCly/calculator)
 
 1. This first article contains the introduction to our problem domain, the setup
    of our project, the basics of TDD and the first steps towards interpreting
@@ -213,15 +213,15 @@ visual explanation:
 
 #### Compiling to bytecode
 
-We use the ast we got from the previous step to compile each node to a list of
+We use the AST we got from the previous step to compile each node to a list of
 bytecode instructions. The bottom most node, commonly referred to as leafs are
 all numbers, thus we will start there.
 
-The bytecode vm we want to implement has a list of registers, comparable to the
-cpu registers on a real machine. We can load and manipulate values in these
+The bytecode VM we want to implement has a list of registers, comparable to the
+CPU registers on a real machine. We can load and manipulate values in these
 registers. In the third and fourth part of this series, we will go into great
 depth on registers, bytecode and virtual machines. For now simply know there
-are registers, we can manipulate them, our vm accepts an instruction and an
+are registers, we can manipulate them, our VM accepts an instruction and an
 argument.
 
 Lets now take a look at the bytecode our previous example compiles to:
@@ -340,7 +340,7 @@ which screams we should use TDD and iterate until all tests are passing. We
 will create our tests once we defined the different kinds a token can represent
 and the `Token` structure.
 
-## Tokenizing
+## Tokenising
 
 Leaving the above behind, lets now get to the gist of this part of the series:
 the tokeniser. Our main goal is to step through the source code we input and
@@ -517,7 +517,8 @@ func TestLexer(t *testing.T) {
 }
 ```
 
-Running our tests with `go test ./... -v` will result in an error simply because we have not yet defined our Lexer:
+Running our tests with `go test ./... -v` will result in an error simply
+because we have not yet defined our Lexer:
 
 ```text
 $ go test ./... -v
@@ -573,8 +574,8 @@ var TOKEN_LOOKUP = map[int]string{
 ```
 
 {{<callout type="Tip">}}
-With vim the above is extremly easy to generate, simply copy the before defined
-types of tokens, paste them into the map, remove `= iota +1`, whitespace and
+With vim the above is extremely easy to generate, simply copy the before defined
+types of tokens, paste them into the map, remove `= iota +1`, white space and
 comments. Afterwards mark them again with `Shift+v`. Now regex all over the
 place by typing `:'<,'>s/\([A-Z_]\+\)/\1: "\1",`, this creates a capture group
 for all upper case characters found one or more times, this group is reused in
@@ -640,7 +641,7 @@ iterates until the current character is no longer a part of a number and
 returns a `Token` structure.
 
 `Lexer.advance` requests the next character from the buffered scanner and sets
-`Lexer.cur` to the resulting charcter.
+`Lexer.cur` to the resulting character.
 
 {{<callout type="Tip">}}
 
@@ -715,7 +716,7 @@ indicate this to our `Lexer.Lex` function we will set the `Lexer.cur` field to
 `0`.
 
 {{<callout type="Tip">}}
-End of file is often refered to as `EOF`.
+End of file is often referred to as `EOF`.
 {{</callout>}}
 
 We will now focus on the heart of the tokeniser: `Lexer.Lex()`:
@@ -765,7 +766,7 @@ Every good programming language ignores white space and so do we (looking at
 you [Python](https://peps.python.org/pep-0008/#code-lay-out)). White space is
 commonly defined as a new line: `'\n'` / `'\r'`, a tab `'\t'` or a space `' '`.
 
-Lets add a new test case called `whitespace` to our whitespace tests:
+Lets add a new test case called `whitespace` to our white space tests:
 
 ```go{hl_lines=["13-19"]}
 // lexer_test.go
@@ -792,7 +793,7 @@ func TestLexer(t *testing.T) {
 }
 ```
 
-Having defined what we want as the output, lets get started with ignoring whitespace:
+Having defined what we want as the output, lets get started with ignoring white space:
 
 To check if the current character matches any of the above we introduce
 a [switch case statement](https://go.dev/tour/flowcontrol/9):
@@ -916,7 +917,7 @@ ok      calc    0.001s
 
 ### Detecting special symbols
 
-Having added tests for empty input, ignoring whitespace and comments, we will
+Having added tests for empty input, ignoring white space and comments, we will
 now add a new test for the symbols we want to recognize in out input:
 
 ```go{hl_lines=["14-26"]}
@@ -1081,7 +1082,7 @@ PASS
 ok      calc    0.003s
 ```
 
-And we pass our tests, the only feature missing from our tokenizer is detecting
+And we pass our tests, the only feature missing from our tokeniser is detecting
 numbers.
 
 ### Support for integers and floating point numbers
@@ -1141,9 +1142,203 @@ func TestLexer(t *testing.T) {
 }
 ```
 
-<!--TODO: implementing number support -->
-<!--TODO: run tests -->
+Lets add a `default`-case to our switch statement:
 
-## Calling our Tokenizer
+```go{hl_lines=["12-15"]}
+// lexer.go
+package main
 
-<!--TODO: call tokenizer from main -->
+// [...]
+
+func (l *Lexer) Lex() []Token {
+    // [...]
+	for l.cur != 0 {
+        // [...]
+		switch l.cur {
+            // [...]
+        default:
+			if (l.cur >= '0' && l.cur <= '9') || l.cur == '.' {
+				t = append(t, l.number())
+				continue
+			}
+        }
+        // [...]
+	}
+    // [...]
+}
+```
+
+As one should notice we have yet to define the `*Lexer.number` function:
+
+```go
+// lexer.go
+package main
+
+// [...]
+
+func (l *Lexer) number() Token {
+	b := strings.Builder{}
+	for (l.cur >= '0' && l.cur <= '9') || l.cur == '.' || l.cur == '_' || l.cur == 'e' {
+		b.WriteRune(l.cur)
+		l.advance()
+	}
+	return Token{
+		Raw:  b.String(),
+		Type: TOKEN_NUMBER,
+	}
+}
+```
+
+The function makes use of the `strings.Builder` structure. This is used to omit
+copying the string which we would have to do if we simply used `string+string`.
+We iterate while our character matches what we want and write to the
+`strings.Builder` structure. Upon hitting a character we do not accept the loop
+stops and the function returns a `Token`-Structure with the result of the
+`strings.Builder` we defined and wrote to previously.
+
+Combining the previously added `default`-case and our new `*Lexer.number()`
+function we added support for numbers starting with `0-9` or `.`. We support
+infixes such as `_`, `.`, `_` and `e` - exactly matching our test cases, thus
+we can now once again check if our tests pass:
+
+```text{hl_lines=["6-9", "15-18"]}
+=== RUN   TestLexer
+=== RUN   TestLexer/empty_input
+=== RUN   TestLexer/whitespace
+=== RUN   TestLexer/comment
+=== RUN   TestLexer/symbols
+=== RUN   TestLexer/number
+=== RUN   TestLexer/number_with_underscore
+=== RUN   TestLexer/number_with_e
+=== RUN   TestLexer/number_with_.
+--- PASS: TestLexer (0.00s)
+    --- PASS: TestLexer/empty_input (0.00s)
+    --- PASS: TestLexer/whitespace (0.00s)
+    --- PASS: TestLexer/comment (0.00s)
+    --- PASS: TestLexer/symbols (0.00s)
+    --- PASS: TestLexer/number (0.00s)
+    --- PASS: TestLexer/number_with_underscore (0.00s)
+    --- PASS: TestLexer/number_with_e (0.00s)
+    --- PASS: TestLexer/number_with_. (0.00s)
+PASS
+ok      calc    0.003s
+```
+
+## Calling our Tokeniser
+
+Out tests pass - we can finally move on to my favorite part of every
+programming project: passing input via the command line to our program and
+seeing the output. Doing so requires some packages. We need `os` to access the
+command line arguments our program was called with, we need `strings` to create
+a `io.Reader` for the parameter our tokeniser requires. Furthermore we include
+the `log` package and promptly disable all prefixes, timestamps, etc. by
+invoking `log.SetFlags` with 0 as the argument.
+
+```go
+package main
+
+import (
+	"log"
+	"os"
+	"strings"
+)
+
+func main() {
+    log.SetFlags(0)
+	if len(os.Args) != 2 {
+		log.Fatalln("missing input")
+	}
+
+	input := os.Args[1]
+
+	token := NewLexer(strings.NewReader(input)).Lex()
+}
+```
+
+{{<callout type="Tip">}}
+When an executable build with go is started it can access the arguments passed to it via the `os.Args` slice:
+
+```go
+// main.go
+package main
+
+import (
+    "fmt"
+    "os"
+)
+
+func main() {
+    fmt.Println(os.Args)
+}
+```
+
+```text
+$ go build .
+$ ./main arg1 arg2 arg3
+[./main arg1 arg2 arg3]
+```
+
+The 0 index is always the name of the executable.
+
+{{</callout>}}
+
+We got our tokens but we haven't printed them yet, so we create a helper method
+called `debugToken` - we first print the header of our table and afterwards
+iterate through our list of `Token` structures, printing them one by one.
+
+```go{hl_lines=["6-11", 2, "21"]}
+// main.go
+package main
+
+// [...]
+
+func debugToken(token []Token) {
+	log.Printf("%5s | %20s | %15s \n\n", "index", "type", "raw")
+	for i, t := range token {
+		log.Printf("%5d | %20s | %15s \n", i, TOKEN_LOOKUP[t.Type], t.Raw)
+	}
+}
+
+func main() {
+    log.SetFlags(0)
+	if len(os.Args) != 2 {
+		log.Fatalln("missing input")
+	}
+
+	input := os.Args[1]
+
+	token := NewLexer(strings.NewReader(input)).Lex()
+	debugToken(token)
+}
+```
+
+Running our program with an expression of our choice results in a table of lexemes we recognized
+
+```text
+$ go run . "100_000+.5*(42-3.1415)/12"
+index |                 type |             raw
+
+    0 |         TOKEN_NUMBER |         100_000
+    1 |           TOKEN_PLUS |               +
+    2 |         TOKEN_NUMBER |              .5
+    3 |       TOKEN_ASTERISK |               *
+    4 |     TOKEN_BRACE_LEFT |               (
+    5 |         TOKEN_NUMBER |              42
+    6 |          TOKEN_MINUS |               -
+    7 |         TOKEN_NUMBER |          3.1415
+    8 |    TOKEN_BRACE_RIGHT |               )
+    9 |          TOKEN_SLASH |               /
+   10 |         TOKEN_NUMBER |              12
+   11 |                  EOF |       TOKEN_EOF
+```
+
+{{<callout type="Closing Words">}}
+We did it, we read our input, recognized lexemes in it, stored theses in
+structures and attached meaning we require for further processing to them. All
+while employing TDD and tests the way the go god fathers intended us to.
+
+The next part will probably take a while longer to make, this one already took
+me a week to write. Keep an eye on my [RSS feed](https://xnacly.me/index.xml) -
+I'm very excited to finally fully understand precedence parsing and writing the
+next blog article.
+{{</callout>}}
