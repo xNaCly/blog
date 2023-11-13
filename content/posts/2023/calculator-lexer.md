@@ -18,8 +18,11 @@ the [ast](https://en.wikipedia.org/wiki/Abstract_syntax_tree), walking the ast
 / flatting it to byte code, [bytecode virtual
 machines](https://en.wikipedia.org/wiki/Bytecode) and
 [TDD](https://en.wikipedia.org/wiki/Test-driven_development) centered around
-compilers and interpreters. The corresponding GitHub repository can be found
-[here](https://github.com/xNaCly/calculator)
+compilers and interpreters.
+
+{{<callout type="Info">}}
+The corresponding GitHub repository can be found [here](https://github.com/xNaCly/calculator).
+{{</callout>}}
 
 1. This first article contains the introduction to our problem domain, the setup
    of our project, the basics of TDD and the first steps towards interpreting
@@ -472,7 +475,7 @@ $ go get <repo>
 
 For our example we want the `github.com/stretchr/testify/assert` package, thus we execute:
 
-```
+```text
 $ go get github.com/stretchr/testify/assert
 ```
 
@@ -482,7 +485,7 @@ Lets add our first test - an edge case - specifically the case of an empty
 input for which we expect only one structure `Token` with `Token.Type:
 TOKEN_EOF` in the resulting token list.
 
-```go {hl_lines=["26-32"]}
+```go {hl_lines=["17-23"]}
 // lexer_test.go
 package main
 
