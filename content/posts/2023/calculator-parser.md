@@ -5,8 +5,7 @@ date: 2023-11-13
 draft: true
 tags:
   - go
-  - bytecode vm
-  - parser
+  - bytecode-series
 ---
 
 {{<callout type="Tip">}}

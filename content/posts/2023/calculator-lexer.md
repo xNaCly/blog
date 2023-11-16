@@ -4,7 +4,7 @@ summary: "In depth explaination around writing a simple interpreter"
 date: 2023-10-16
 tags:
   - go
-  - bytecode vm
+  - bytecode-series
 ---
 
 ## Introduction
