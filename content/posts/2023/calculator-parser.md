@@ -38,9 +38,52 @@ The corresponding GitHub repository can be found
 [here](https://github.com/xNaCly/calculator).
 {{</callout>}}
 
-<!-- TODO: introduction -->
-<!-- TODO: explain parsing -->
-<!-- TODO: showcase grammar -->
+In this part of the series we will focus on converting our token stream to an
+abstract syntax tree. We do so by defining a grammar, building a recursive
+descent parser to accept that grammar and letting it spit out an abstract
+syntax tree we can use in the two remaining parts of the series.
+
+As showcased in the first part of the series (see
+[here](https://xnacly.me/posts/2023/calculator-lexer/#parsing)) the parser
+builds a tree of nodes in which every node contains a token and up to two
+children. Visualising this is as easy as deciding on an example expression:
+`1+1` this expression can be represented as an ast as follows:
+
+```text
+Node {
+    Token: {Type: PLUS}
+    Children: [
+        Node { Token: {Type: NUMBER, Raw: "1"} }
+        Node { Token: {Type: NUMBER, Raw: "1"} }
+    ]
+}
+```
+
+Once we are choosing more complex expressions we will stumble upon the issue of
+representing precedence. For instance consider `1+2*3` we immediately know
+`2*3` has to be evaluated first and is afterwards added to `1` -> `1+(2*3)`.
+
+Representing this in the AST is as easy as representing the before expression.
+The deeper an expression is located in the tree the earlier it is evaluated,
+thus we can build the tree for the expression:
+
+```text
+Node {
+    Token: {Type: PLUS}
+    Children: [
+        Node { Token: {Type: NUMBER, Raw: "1"} }
+        Node {
+            Token: {Type: ASTERIKS}
+            Children: [
+                Node { Token: {Type: NUMBER, Raw: "2"} }
+                Node { Token: {Type: NUMBER, Raw: "3"} }
+            ]
+        }
+    ]
+}
+```
+
+## Grammar
 
 ## Parsing
 
