@@ -1,6 +1,6 @@
 ---
 title: "Tokenizing Arithmetic expressions - calculator p.1"
-summary: "In depth explaination around writing a simple interpreter"
+summary: "In depth guide on tokenizing input + interpreter setup"
 date: 2023-10-16
 tags:
   - go
