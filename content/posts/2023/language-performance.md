@@ -3,7 +3,7 @@ title: Improving programming language performance
 summary: Reducing the execution time of a benchmark by 703% or 7.03x
 date: 2023-12-06
 tags:
-  - lisp
+  - sophia
   - performance
   - go
 ---
