@@ -1,6 +1,6 @@
 ---
 title: Improving programming language performance
-summary: Reducing the execution time of a benchmark by 703% or 7.03x
+summary: Reducing the execution time of a benchmark by 85% or 7.03x
 date: 2023-12-06
 tags:
   - sophia
@@ -11,7 +11,7 @@ tags:
 {{<callout type="Introduction">}}
 How I improved my programming language runtime (see
 [sophia](https://github.com/xnacly/Sophia)) for a specific benchmark by
-reducing its execution time by 7.03 times or 703%. The benchmark script
+reducing its execution time by 7.03 times or 85%. The benchmark script
 previously took 22.2 seconds. I reduced it to 3.3s!
 {{</callout>}}
 
