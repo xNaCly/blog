@@ -1,6 +1,6 @@
 ---
 title: "Sophia Lang Weekly - 01"
-summary: "This week in sophia lang land :^)"
+summary: "New object/array index syntax, use Go functions from sophia"
 date: 2023-12-15
 tags:
   - sophia

@@ -1,6 +1,6 @@
 ---
 title: "Sophia Lang Weekly - 00"
-summary: "This week in sophia lang land :^)"
+summary: "Performance, nested objects/arrays & better errors"
 date: 2023-12-09
 tags:
   - sophia
