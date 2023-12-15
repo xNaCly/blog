@@ -118,14 +118,14 @@ id say more redable than before:
 })
 
 ;; accessing an object field by a known key:
-(put object["workers"])
+(println object["workers"])
 
 ;; accessing an object field dynamically:
 (let field "whatever")
-(put object[field]) ;; results in <nil>
+(println object[field]) ;; results in <nil>
 
 ;; nested array and object access:
-(put object["workers"][1]["name"]) ;; results in "drone2"
+(println object["workers"][1]["name"]) ;; results in "drone2"
 ```
 
 I also again improved the error messages for indexing, see
