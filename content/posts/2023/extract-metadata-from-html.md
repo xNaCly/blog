@@ -1,6 +1,7 @@
 ---
 title: "Extract Metadata From HTML with GO"
 date: 2024-01-03
+summary: "Guide to extracting data from HTML using GO"
 tags:
   - go
 ---
