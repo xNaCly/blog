@@ -1,8 +1,7 @@
 ---
-title: "POC Jit With Go (plugins)"
-summary: "Proof of concept for compiling arithmetic expressions just in time"
+title: "POC JIT With Go (plugins)"
+summary: "Proof of concept for compiling arithmetic expressions on the fly"
 date: 2024-01-05
-draft: true
 tags:
   - go
 ---
@@ -17,16 +16,14 @@ tree-walk interpreter as well as a byte code compiler and virtual machine to
 compare this JIT to. The front-end (lexer, parser) is shared, the back-end is
 specific to the approach of evaluation.
 
-## Overview
-
-As mentioned before the scope is choose for this compiler is limited to
-arithmetic expressions, thus i want to accept the following:
+As mentioned before the scope I choose for this compiler is limited to
+arithmetic expressions, thus I want to accept the following:
 
 ```text
 1+1.2-5
 ```
 
-### Tokenizing
+## Tokenizing
 
 We convert our character stream to tokens:
 
@@ -38,7 +35,7 @@ MINUS
 NUMBER 5
 ```
 
-### Parsing
+## Parsing
 
 We parse the tokens and produce an abstract syntax tree via recursive descent:
 
@@ -60,7 +57,7 @@ Binary {
 }
 ```
 
-### Code-generation
+## Code-generation
 
 I want to generate go code from the abstract syntax tree, I know for
 arithmetics its pretty idiotic, but i want to evaluate the pipeline in a
@@ -75,10 +72,11 @@ func Main()float64{return 1E+00+1.2E+00-5E+00}
 {{<callout type="Tip">}}
 The generated function has to be exported, otherwise the `plugin` package will
 not recognize it. I had to choose this weird way of representing floating point
-integers, because otherwise there would be some weird results.
+integers, because otherwise there would be some weird results caused by go not
+casting numbers to floating point integers.
 {{</callout>}}
 
-### Compilation
+## Compilation
 
 The go compiler sits in an
 [internal](https://pkg.go.dev/cmd/go#hdr-Internal_Directories) go package, see
@@ -88,18 +86,47 @@ could not include it in my JIT, thus I had to use
 [`os/exec`](https://pkg.go.dev/os/exec) for invoking the compiler:
 
 ```go
-// [...]
-	cmd := exec.Command("go", "build", "-buildmode=plugin", "-o", "jit_output.so", "jit_output.go")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, err
-	}
-// [...]
+package main
+
+import (
+    "os"
+    "os/exec"
+    "fmt"
+)
+
+func JIT() (func() float64, error) {
+    generatedCode := `package main
+func Main() float64 {
+    return 1E+00+1.2E+00-5E+00
+}
+   `
+    err := os.WriteFile("jit_output.go", []byte(generatedCode), 0777)
+    if err != nil {
+        return nil, err
+    }
+    cmd := exec.Command("go", "build", "-buildmode=plugin", "-o", "jit_output.so", "jit_output.go")
+    err := cmd.Run()
+    if err != nil {
+        return nil, err
+    }
+
+
+
+    return nil, nil
+}
+
+func main() {
+    function, err := JIT()
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(function())
+}
 ```
 
 This first step calls the compiler and wants it to build a go plugin.
 
-{{<callout type="Hint">}}
+{{<callout type="Tip">}}
 See `go help build`:
 
 ```text
@@ -127,3 +154,83 @@ are:
 ```
 
 {{</callout>}}
+
+Now a go plugin called `jit_output.so` sits in our project root.
+
+## Go plugins
+
+Go features a package called [plugin](https://pkg.go.dev/plugin) for loading
+and resolving go symbols of go plugins. There are some drawbacks such as
+missing portability due to no windows support and easily exploitable bugs in
+plugin loaders - since this is a POC JIT requiring the go compiler toolchain in
+the path I'm not even going to walk down the road of portability.
+
+Since we know the location of the plugin and the symbols in it our interactions
+with the plugin packages should be minimal - I need to open the plugin file,
+locate the `Main` function, cast it to `func() float64` and return the result.
+
+```go {hl_lines=["27-43"]}
+package main
+
+import (
+    "os"
+    "os/exec"
+    "fmt"
+    "plugin"
+    "errors"
+)
+
+func JIT() (func() float64, error) {
+    generatedCode := `package main
+func Main() float64 {
+    return 1E+00+1.2E+00-5E+00
+}
+   `
+    err := os.WriteFile("jit_output.go", []byte(generatedCode), 0777)
+    if err != nil {
+        return nil, err
+    }
+    cmd := exec.Command("go", "build", "-buildmode=plugin", "-o", "jit_output.so", "jit_output.go")
+    err := cmd.Run()
+    if err != nil {
+        return nil, err
+    }
+
+    plug, err := plugin.Open("jit_output.so")
+    if err != nil {
+        return nil, err
+    }
+
+	symbol, err := plug.Lookup("Main")
+	if err != nil {
+		fmt.Println(sharedObjectPath)
+		return nil, err
+	}
+
+	Main, ok := symbol.(func() float64)
+	if !ok {
+		return nil, errors.New("Error while accessing jit compiled symbols")
+	}
+
+	return Main, nil
+}
+
+func main() {
+    function, err := JIT()
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(function())
+}
+```
+
+I know this JIT compiler is very rudimentary and uses the go tool chain,
+however I plan on adding a bytecode compiler and a bytecode vm to the
+[sophia](https://github.com/xnacly/sophia) programming language. This vm will
+include meta tracing capabilities and a JIT compiler for turning hot paths into
+go source code and compiling it on the fly.
+
+## What to do with this JIT
+
+My plan is to compare the three different approaches to evaluation techniques
+in a blog article in the next few weeks, expect some in depth benchmarks.
