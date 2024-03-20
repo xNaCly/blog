@@ -2,7 +2,6 @@
 title: "Inserting 100k rows 66 times faster"
 summary: "Doing less enables doing more INSERTs"
 date: 2024-03-20
-draft: true
 tags:
   - js
   - SQL
