@@ -12,6 +12,8 @@ I am currently majoring in applied computer science at [DHBW](https://www.dhbw.d
     <img src="/images/badges/green-team.gif"/>
     <img src="/images/badges/nothingtoblock.gif"/>
     <img src="/images/badges/noweb3.gif"/>
+</div>
+<div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.5rem">
     <img src="/images/badges/linux.gif"/>
     <img src="/images/badges/antiNFT.gif"/>
 </div>

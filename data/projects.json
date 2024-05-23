@@ -13,9 +13,33 @@
       "tech": ["Go", "Markdown", "HTML", "CSS"]
     },
     {
-      "title": "go-jsonobfuscator",
-      "description": "A library for obfuscation and encryption of go structures and json objects",
-      "url": "https://github.com/iskre/go-jsonobfuscator/",
+      "title": "tcmpr",
+      "description": "Combination of huffman coding and run-length lossless compression",
+      "url": "https://github.com/xNaCly/tcmpr",
+      "tech": ["Go"]
+    },
+    {
+      "title": "mehr",
+      "description": "Operating system-independent package and configuration manager",
+      "url": "https://github.com/xNaCly/mehr",
+      "tech": ["Go", "TOML"]
+    },
+    {
+      "title": "panzer",
+      "description": "panzer 🐢 - a minimal, fast and fun to use shell written in go",
+      "url": "https://github.com/xNaCly/panzer",
+      "tech": ["Go"]
+    },
+    {
+      "title": "manbib",
+      "description": "Index, search and view locally installed man pages via a web interface.",
+      "url": "https://github.com/xNaCly/manbib",
+      "tech": ["Go", "Roff", "Pandoc"]
+    },
+    {
+      "title": "gorepl",
+      "description": "A go Read Eval Print Loop because I am missing one ",
+      "url": "https://github.com/xNaCly/gorepl",
       "tech": ["Go"]
     },
     {
@@ -25,28 +49,22 @@
       "tech": ["Go", "Bash"]
     },
     {
+      "title": "statlib",
+      "description": "go library for commonly used statistical computations, optimized for performance, zero allocations",
+      "url": "https://github.com/xNaCly/statlib",
+      "tech": ["Go"]
+    },
+    {
+      "title": "syllable-helper",
+      "description": "Display german words matching a given syllable",
+      "url": "https://github.com/xNaCly/syllable-helper",
+      "tech": ["JavaScript", "HTML", "CSS"]
+    },
+    {
       "title": "git-auto-sync",
       "description": "highly configurable utility to commit and push to the remote origin every X minutes",
       "url": "https://github.com/xNaCly/git-auto-sync",
       "tech": ["Git", "Go"]
-    },
-    {
-      "title": "Dotfiles",
-      "description": "collection of my linux config files, including setup / installer script",
-      "url": "https://github.com/xNaCly/dotfiles",
-      "tech": ["Shell", "Lua", "Python"]
-    },
-    {
-      "title": "blog",
-      "description": "minimal staticly generated blog / portfolio, powered by hugo and a custom theme",
-      "url": "https://github.com/xNaCly/blog",
-      "tech": ["Hugo", "HTML", "CSS"]
-    },
-    {
-      "title": "opus cli",
-      "description": "simple to-do list manager, written for the terminal, designed for powerusers",
-      "url": "https://github.com/xNaCly/opusCli",
-      "tech": ["Rust", "SQLite"]
     },
     {
       "title": "c_paket",
@@ -61,22 +79,10 @@
       "tech": ["C", "Gcc", "Make"]
     },
     {
-      "title": "better-issues",
-      "description": "cdn to render github issues and readmes as images using puppeteer",
-      "url": "https://github.com/xNaCly/better-issues",
-      "tech": ["Javascript", "Node.js", "Puppeteer"]
-    },
-    {
-      "title": "xc",
-      "description": "implementation of the gnu coreutil wordcount (wc) tool in various languages",
-      "url": "https://github.com/xNaCly/xc",
-      "tech": ["C", "Go", "Rust", "Java", "Python"]
-    },
-    {
-      "title": "Portfolio v1",
-      "description": "first iteraton of my portfolio, uses nuxt-content for the blog, written in vue",
-      "url": "https://github.com/xNaCly/portfolio",
-      "tech": ["Vue.js", "nuxt", "Javascript"]
+      "title": "blog",
+      "description": "minimal staticly generated blog / portfolio, powered by hugo and a custom theme",
+      "url": "https://github.com/xNaCly/blog",
+      "tech": ["Hugo", "HTML", "CSS"]
     }
   ]
 }
