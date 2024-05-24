@@ -1,0 +1,16 @@
+{
+  "papers": [
+    {
+      "title": "Mondern Algorithms for Garbage Collection.",
+      "link": "/papers/modern_algorithms_for_gc.pdf",
+      "slides": "/papers/slides_modern_algorithms_for_gc.pdf",
+      "description": "Outlining modern algorithms for garbage collection on the examples of Go and Java"
+    },
+    {
+      "title": "Generating Test data for Table driven Tests with different LLMs to evaluate their potential for test automation.",
+      "link": "/papers/generating_tests_with_llms.pdf",
+      "slides": "/papers/slides_generating_tests_with_llms.pdf",
+      "description": "Scoring and evaluating the potential of large language models by generating test cases via table driven testing for a rudimentary and a complex example implemented in the Go programming language."
+    }
+  ]
+}
