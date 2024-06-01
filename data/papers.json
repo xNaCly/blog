@@ -1,6 +1,11 @@
 {
   "papers": [
     {
+      "title": "Comparing a Tree-walk Interpreter with JIT compilation and embedding via Go-plugins",
+      "link": "/papers/tree-walk-vs-go-jit.pdf",
+      "description": "Evaluating the trade-offs of using the Go-plugin API for JIT compilation while comparing the approach with a Tree-walk interpreter"
+    },
+    {
       "title": "Mondern Algorithms for Garbage Collection.",
       "link": "/papers/modern_algorithms_for_gc.pdf",
       "slides": "/papers/slides_modern_algorithms_for_gc.pdf",
