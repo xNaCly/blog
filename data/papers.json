@@ -3,6 +3,7 @@
     {
       "title": "Comparing a Tree-walk Interpreter with JIT compilation and embedding via Go-plugins",
       "link": "/papers/tree-walk-vs-go-jit.pdf",
+      "slides": "/papers/slides_tree-walk-vs-go-jit.pdf",
       "description": "Evaluating the trade-offs of using the Go-plugin API for JIT compilation while comparing the approach with a Tree-walk interpreter"
     },
     {
