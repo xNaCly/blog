@@ -1,6 +1,11 @@
 {
   "papers": [
     {
+      "title": "liblzma - OSS and Backdoors",
+      "link": "/papers/liblzma-foss-and-free-backdoors.pdf",
+      "description": "Exploring the xz-utils Backdoor, its Emergence and its Impact on FOSS and OSS"
+    },
+    {
       "title": "Comparing a Tree-walk Interpreter with JIT compilation and embedding via Go-plugins",
       "link": "/papers/tree-walk-vs-go-jit.pdf",
       "slides": "/papers/slides_tree-walk-vs-go-jit.pdf",
