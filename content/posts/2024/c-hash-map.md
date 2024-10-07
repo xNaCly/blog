@@ -29,7 +29,6 @@ size_t hash(Map *m, char *str) {
 }
 
 Map init(size_t cap) {
-    assert(cap%2==0);
     Map m = {0,cap};
     m.buckets = malloc(sizeof(void*)*m.cap);
     assert(m.buckets != NULL);
@@ -59,9 +58,7 @@ to its multiplication with the `PRIME`.
 
 The last line of the `hash`-function includes an optimisation for quicker
 modulus computation, it is equivalent to `initial % m->cap` but is a lot
-faster. It does however only work for the cap being powers of two, this is why
-i am asserting this criteria in the `init` function.
-
+faster. It does however only work for the cap being powers of two.
 
 ## Storing and accessing everything
 
