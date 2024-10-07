@@ -3,7 +3,8 @@ title: "xnacly - blog"
 theme: xnacly
 email: teo@xnacly.me
 canonifyURLs: true
-paginate: 4
+pagination:
+  pagerSize: 4
 enableRobotsTXT: false
 
 markup:
