@@ -17,11 +17,6 @@ markup:
     ordered: false
     startLevel: 2
 
-social:
-  github: https://github.com/xnacly
-  rss: https://xnacly.me/index.xml
-  email: mailto:contact@xnacly.me
-
 sitemap:
   changefreq: weekly
   filename: sitemap.xml
@@ -31,6 +26,10 @@ params:
   author:
     name: xnacly
     email: contact@xnacly.me
+  social:
+    github: https://github.com/xnacly
+    rss: https://xnacly.me/index.xml
+    email: mailto:contact@xnacly.me
   bio: Fullstack Developer and Tech enthusiast
   description: A blog all around tech, programming and whatever im currently interested in
   showPowerBy: false
