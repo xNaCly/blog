@@ -2,22 +2,22 @@ languageCode = 'en-US'
 title = 'xnacly - blog'
 
 [[menus.main]]
-name = 'Home'
+name = '/'
 pageRef = '/'
 weight = 10
 
 [[menus.main]]
-name = 'Posts'
+name = '/archive'
 pageRef = '/posts'
 weight = 20
 
 [[menus.main]]
-name = 'Tags'
+name = '/tags'
 pageRef = '/tags'
 weight = 30
 
 [[menus.main]]
-name = 'About'
+name = '/about'
 pageRef = '/about'
 weight = 40
 
