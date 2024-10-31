@@ -1,8 +1,23 @@
 {{ define "main" }}
-  <h1>{{ .Title }}</h1>
-  {{ .Content }}
-  {{ range .Pages }}
-    <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
-    {{ .Summary }}
-  {{ end }}
+  <!-- List of all pages -->
+  <div class="list">
+    {{ range .Pages.GroupByDate "2006" }}
+        <div class="element">
+            <h3>{{ .Key }}</h3>
+            {{ range .Pages }}
+            <div class="post-archive">
+                {{ if .Summary }}
+                <div class="date">
+                    <time datetime="{{ .PublishDate }}">{{ .PublishDate.Format "Jan 2" }}</time>
+                </div>
+                {{ end }}
+                <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+                {{ range .Params.tags }}
+                    <span>{{ . }}</span>
+                {{ end }}
+            </div>
+            {{ end }}
+        </div>
+    {{ end }}
+  </div>
 {{ end }}
