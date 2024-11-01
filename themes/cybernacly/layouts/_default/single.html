@@ -1,19 +1,28 @@
 {{ define "main" }}
-  <h1>{{ .Title }}</h1>
+<div>
+    <h1>{{ .Title }}</h1>
 
-  <ul>
-      <li>
-          <time datetime="{{ .PublishDate }}">{{ .PublishDate.Format "Jan 2, 2006" }}</time>
-      </li>
-      <li>
-          <span>{{ .WordCount }} Words</span>
-      </li>
-      <li>
-          <span>{{ .ReadingTime }} Minute read</span>
-      </li>
-  </ul>
+    <ul>
+        <li>
+            <time datetime="{{ .PublishDate }}">{{ .PublishDate.Format "Jan 2, 2006" }}</time>
+        </li>
+        <li>
+            <span>{{ .WordCount }} Words</span>
+        </li>
+        <li>
+            <span>{{ .ReadingTime }} Minute read</span>
+        </li>
+    </ul>
 
-  {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
+    {{ with .TableOfContents }}
+    <h3>Table of Contents</h3>
+    <div>
+        {{ . }}
+    </div>
+    {{ end }}
 
-  {{ .Content }}
+    {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
+
+    {{ .Content }}
+</div>
 {{ end }}

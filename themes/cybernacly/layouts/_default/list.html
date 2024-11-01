@@ -6,15 +6,17 @@
             <h3>{{ .Key }}</h3>
             {{ range .Pages }}
             <div class="post-archive">
-                {{ if .Summary }}
-                <div class="date">
+                <div class="left">
+                    {{ if .Summary }}
                     <time datetime="{{ .PublishDate }}">{{ .PublishDate.Format "Jan 2" }}</time>
+                    {{ end }}
+                    <h4><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h4>
                 </div>
-                {{ end }}
-                <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
-                {{ range .Params.tags }}
-                    <span>{{ . }}</span>
-                {{ end }}
+                <div class="tags">
+                    {{ range .Params.tags }}
+                        <a href="/tags/{{.}}">#{{ . }}</a>
+                    {{ end }}
+                </div>
             </div>
             {{ end }}
         </div>

@@ -1,7 +1,34 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width" />
-<title>
-  {{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title
-  site.Title }}{{ end }}
-</title>
+{{ if .IsPage }}
+    <title>{{ .Title }} | {{ $.Site.Title }}</title>
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="{{ .Title }}" />
+    <meta property="og:description" content="{{ .Summary }}" />
+    <meta name="description" content="{{ .Summary }}" />
+    <meta property="article:author" content="xnacly" />
+    <meta property="article:published_time" content="{{ .Date }}" />
+{{ else }}
+    <title>{{ $.Site.Title }}</title>
+    <meta property="og:title" content="{{ $.Site.Title }}" />
+    <meta property="og:description" content="{{ .Site.Params.Description }}" />
+    <meta name="description" content="{{ .Site.Params.Description }}" />
+{{ end }} 
+<link rel="shortcut icon" href="{{ "/images/favicon.ico" | relURL }}" type="image/x-icon" /> 
 {{ partialCached "head/css.html" . }}
+{{ if .OutputFormats.Get "RSS" }}
+    {{ with .OutputFormats.Get "RSS" }}
+    <link
+      href="{{ .RelPermalink }}"
+      rel="alternate"
+      type="application/rss+xml"
+      title="{{ $.Site.Title }}"
+    />
+    <link
+      href="{{ .RelPermalink }}"
+      rel="feed"
+      type="application/rss+xml"
+      title="{{ $.Site.Title }}"
+    />
+    {{ end }} 
+{{ end }}
