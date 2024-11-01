@@ -1,23 +1,23 @@
-baseURL = 'https://example.org/'
 languageCode = 'en-US'
-title = 'My New Hugo Site'
+title = 'xnacly - blog'
 
 [[menus.main]]
-name = 'Home'
+name = '/'
 pageRef = '/'
 weight = 10
 
 [[menus.main]]
-name = 'Posts'
+name = '/archive'
 pageRef = '/posts'
 weight = 20
 
 [[menus.main]]
-name = 'Tags'
-pageRef = '/tags'
+name = '/about'
+pageRef = '/about'
 weight = 30
 
 [module]
   [module.hugoVersion]
     extended = false
     min = "0.116.0"
+
