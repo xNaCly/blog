@@ -1,5 +1,5 @@
 ---
-title: "Making libjson RFC 8259 compilant"
+title: "Making libjson RFC 8259 compliant"
 date: 2024-09-12
 summary: "Giving lots of edge cases attention, so I can call my json parser RFC 8259 compliant"
 tags:
