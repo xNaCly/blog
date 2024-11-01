@@ -1,5 +1,5 @@
 {{ define "main" }}
-<div>
+<div class="centered post">
     <h1>{{ .Title }}</h1>
 
     <ul>
@@ -23,6 +23,10 @@
 
     {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
 
+    <hr>
+
+    <div class="content">
     {{ .Content }}
+    </div>
 </div>
 {{ end }}

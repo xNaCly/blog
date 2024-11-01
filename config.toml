@@ -11,6 +11,7 @@ pagination.pagerSize = 4
     [markup.highlight]
     style = 'solarized-dark'
     lineNos = true
+    lineNumbersInTable = true
 
     [markup.tableOfContents]
     endLevel = 6
