@@ -19,18 +19,25 @@
         {{ end }}
 
         <h3>Projects</h3>
-        {{ range .Site.Data.projects.projects }}
-        <div class="project">
-            <a href="{{ .url }}" rel="me" target="_blank">
-                <span>{{ .title }}</span>
-            </a>
-            <span>{{.description}}</span>
-            <div>
-                {{range .tech}}
-                    <span>{{ . }}</span>
-                {{end}}
-            </div>
-        </div>
-        {{ end }}
+        <table class="projects">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{ range .Site.Data.projects.projects }}
+                <tr>
+                    <td>
+                        <a href="{{ .url }}" rel="me" target="_blank">
+                            <span>{{ .title }}</span>
+                        </a>
+                    </td>
+                    <td>{{.description}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
     </div>
 {{ end }}
