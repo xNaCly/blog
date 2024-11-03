@@ -190,8 +190,23 @@ nav:not(#TableOfContents) {
         }
     }
 
-    .project {
-        /* TODO: */
+    .projects {
+        border-spacing: var(--spacing);
+
+        th {
+            text-align: left;
+        }
+
+        .name {
+            padding: calc(var(--spacing));
+            background-color: var(--primary-dark);
+            border: 2px solid var(--primary);
+            border-left: 7px solid var(--primary);
+        }
+
+        td {
+            color: var(--text);
+        }
     }
 }
 
@@ -265,21 +280,30 @@ nav:not(#TableOfContents) {
 
 /* overwrites */
 
+a {
+    all: unset;
+    color: var(--primary);
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+a:hover {
+    color: var(--primary-darker);
+}
+
+h1 a,
+h2 a,
+h3 a,
+h4 a {
+    text-decoration: none;
+}
+
+
 h1,
 h2,
 h3,
 h4 {
     color: var(--secondary);
-}
-
-a {
-    all: unset;
-    color: var(--primary);
-    cursor: pointer;
-}
-
-a:hover {
-    color: var(--primary-darker);
 }
 
 footer {
