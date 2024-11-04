@@ -1,7 +1,0 @@
-version: "3.9"
-services:
-  blog:
-    hostname: blog
-    build: .
-    ports:
-      - 80:80
