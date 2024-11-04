@@ -8,7 +8,7 @@
         <section class="article">
             <div class="heading">
                 <h3 class="title {{ if .Draft }}draft{{ end }}">
-                    <a href="{{ .RelPermalink }}">{{ $title }}</a>
+                    <a href="{{ .RelPermalink }}">{{ $title }}{{ if .Draft }} [d]{{ end }}</a>
                 </h3>
                 <time datetime="{{ .PublishDate }}">{{ .PublishDate.Format "Jan 2, 2006" }}</time>
             </div>

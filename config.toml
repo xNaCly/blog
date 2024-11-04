@@ -9,14 +9,23 @@ pagination.pagerSize = 4
 [markup]
 
     [markup.highlight]
-    style = 'solarized-dark'
+    style = 'base16-snazzy'
     lineNos = true
-    lineNumbersInTable = true
+    lineNumbersInTable = false
 
     [markup.tableOfContents]
     endLevel = 6
     ordered = false
     startLevel = 2
+
+    [markup.goldmark]
+        [markup.goldmark.extensions]
+            [markup.goldmark.extensions.passthrough]
+                enable = true
+            [markup.goldmark.extensions.passthrough.delimiters]
+                block = [['\[', '\]'], ['$$', '$$']]
+                inline = [['\(', '\)']]
+
 
 [sitemap]
 changefreq = 'weekly'
