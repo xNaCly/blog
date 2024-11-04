@@ -1,0 +1,35 @@
+{{ define "main" }}
+    <div class="centered home">
+    {{ $pages := .Site.RegularPages }} 
+    {{ $paginator := .Paginate ($pages) }} 
+    {{ range $paginator.Pages }} 
+        {{ $title := .Title }} 
+        {{ $summary := .Summary }}
+        <section class="article">
+            <div class="heading">
+                <h3 class="title {{ if .Draft }}draft{{ end }}">
+                    <a href="{{ .RelPermalink }}">{{ $title }}{{ if .Draft }} [d]{{ end }}</a>
+                </h3>
+                <time datetime="{{ .PublishDate }}">{{ .PublishDate.Format "Jan 2, 2006" }}</time>
+            </div>
+
+            <div class="summary">{{ $summary | plainify | htmlUnescape }}</div>
+        </section>
+    {{ end }}
+
+    {{ if or ($paginator.HasPrev) ($paginator.HasNext) }}
+        <div class="pagination">
+            {{ if $paginator.HasPrev }}
+                <a href="{{.Paginator.Prev.URL}}">
+                    Newer {{ with .Site.Params.newerPosts }}{{ . }}{{ end }}
+                </a>
+            {{ end }} 
+            {{ if $paginator.HasNext }}
+                <a class="older" href="{{.Paginator.Next.URL}}">{{ with .Site.Params.olderPosts }}{{ . }}{{ end }}
+                    Older
+                </a>
+            {{ end }}
+        </div>
+    {{ end }}
+</div>
+{{ end }}

@@ -1,88 +1,59 @@
 {
-  "projects": [
-    {
-      "title": "Sophia",
-      "description": "A small lisp inspired programming language with: Strings, Bools, Floats, Variables and Controlflow",
-      "url": "https://github.com/xNaCly/Sophia",
-      "tech": ["Go", "Lisp"]
-    },
-    {
-      "title": "fleck",
-      "description": "A minimal and highly optimized markdown2html converter, supports macros",
-      "url": "https://github.com/xNaCly/fleck",
-      "tech": ["Go", "Markdown", "HTML", "CSS"]
-    },
-    {
-      "title": "tcmpr",
-      "description": "Combination of huffman coding and run-length lossless compression",
-      "url": "https://github.com/xNaCly/tcmpr",
-      "tech": ["Go"]
-    },
-    {
-      "title": "mehr",
-      "description": "Operating system-independent package and configuration manager",
-      "url": "https://github.com/xNaCly/mehr",
-      "tech": ["Go", "TOML"]
-    },
-    {
-      "title": "panzer",
-      "description": "panzer 🐢 - a minimal, fast and fun to use shell written in go",
-      "url": "https://github.com/xNaCly/panzer",
-      "tech": ["Go"]
-    },
-    {
-      "title": "manbib",
-      "description": "Index, search and view locally installed man pages via a web interface.",
-      "url": "https://github.com/xNaCly/manbib",
-      "tech": ["Go", "Roff", "Pandoc"]
-    },
-    {
-      "title": "gorepl",
-      "description": "A go Read Eval Print Loop because I am missing one ",
-      "url": "https://github.com/xNaCly/gorepl",
-      "tech": ["Go"]
-    },
-    {
-      "title": "gleichzeitig",
-      "description": "Run shell scripts, commands and executables in parallel",
-      "url": "https://github.com/xNaCly/gleichzeitig",
-      "tech": ["Go", "Bash"]
-    },
-    {
-      "title": "statlib",
-      "description": "go library for commonly used statistical computations, optimized for performance, zero allocations",
-      "url": "https://github.com/xNaCly/statlib",
-      "tech": ["Go"]
-    },
-    {
-      "title": "syllable-helper",
-      "description": "Display german words matching a given syllable",
-      "url": "https://github.com/xNaCly/syllable-helper",
-      "tech": ["JavaScript", "HTML", "CSS"]
-    },
-    {
-      "title": "git-auto-sync",
-      "description": "highly configurable utility to commit and push to the remote origin every X minutes",
-      "url": "https://github.com/xNaCly/git-auto-sync",
-      "tech": ["Git", "Go"]
-    },
-    {
-      "title": "c_paket",
-      "description": "fast and efficient source based package manager for the c programming language",
-      "url": "https://github.com/xNaCly/c_paket",
-      "tech": ["C", "Gcc", "Make"]
-    },
-    {
-      "title": "pgmE",
-      "description": "extremely fast, small and efficient editor which implements the pgm standard",
-      "url": "https://github.com/xNaCly/pgmE",
-      "tech": ["C", "Gcc", "Make"]
-    },
-    {
-      "title": "blog",
-      "description": "minimal staticly generated blog / portfolio, powered by hugo and a custom theme",
-      "url": "https://github.com/xNaCly/blog",
-      "tech": ["Hugo", "HTML", "CSS"]
-    }
-  ]
+    "projects": [
+        {
+            "title": "libjson",
+            "description": "Fast and minimal JSON parser library written in and for go",
+            "url": "https://github.com/xNaCly/libjson"
+        },
+        {
+            "title": "sqleibniz",
+            "description": "A static analysis tool for sql, check syntax errors as well as semantic errors on snippets or full schemata",
+            "url": "https://github.com/xNaCly/sqleibniz"
+        },
+        {
+            "title": "Sophia",
+            "description": "Lisp like, embeddable and extendable scripting language supporting go interoperability",
+            "url": "https://github.com/xNaCly/Sophia"
+        },
+        {
+            "title": "roguelike",
+            "description": "A roguelike, implemented in c without any dependencies",
+            "url": "https://github.com/xNaCly/roguelike"
+        },
+        {
+            "title": "codedraw",
+            "description": "Draw with commands, export and share your creations",
+            "url": "https://github.com/xNaCly/codedraw"
+        },
+        {
+            "title": "fleck",
+            "description": "A minimal, configurable and highly optimized markdown2html compiler, supports macros, watch mode, syntax highlighting, latex math and live preview",
+            "url": "https://github.com/xNaCly/fleck"
+        },
+        {
+            "title": "tcmpr",
+            "description": "Combination of huffman coding and run-length lossless compression",
+            "url": "https://github.com/xNaCly/tcmpr"
+        },
+        {
+            "title": "statlib",
+            "description": "go library for commonly used statistical computations, optimized for performance, zero allocations",
+            "url": "https://github.com/xNaCly/statlib"
+        },
+        {
+            "title": "mehr",
+            "description": "Operating system-independent package and configuration manager",
+            "url": "https://github.com/xNaCly/mehr"
+        },
+        {
+            "title": "panzer",
+            "description": "panzer 🐢 - a minimal, fast and fun to use shell written in go",
+            "url": "https://github.com/xNaCly/panzer"
+        },
+        {
+            "title": "gleichzeitig",
+            "description": "Run shell scripts, commands and executables in parallel",
+            "url": "https://github.com/xNaCly/gleichzeitig"
+        }
+    ]
 }

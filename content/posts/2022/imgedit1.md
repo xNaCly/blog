@@ -35,7 +35,7 @@ also include methods to manipulate Images in the `PGM`-format. The following fun
 
 ### README
 
-```
+```text
 pgmE - portable graymap Editor
 ==========
 pgmE is an extremely fast, small and efficient editor which implements the pgm standard.
@@ -104,7 +104,7 @@ definition), prefixed with `#` .
 
 #### Example:
 
-```
+```text
 P2
 # Shows the word "FEEP" (example from Netpbm man page on PGM)
 24 7
@@ -122,7 +122,7 @@ P2
 
 After reading two dozen blogs and a lot of trial and error, i settled on the following dir structure:
 
-```
+```text
 .
 ├── build
 │  └── main.out

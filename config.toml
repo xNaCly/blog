@@ -1,0 +1,46 @@
+title = 'xnacly - blog'
+theme = 'cybernacly'
+email = 'teo@xnacly.me'
+canonifyURLs = true
+enableRobotsTXT = false
+
+pagination.pagerSize = 4
+
+[markup]
+
+    [markup.highlight]
+    style = 'base16-snazzy'
+    lineNos = true
+    lineNumbersInTable = false
+
+    [markup.tableOfContents]
+    endLevel = 6
+    ordered = false
+    startLevel = 2
+
+    [markup.goldmark]
+        [markup.goldmark.extensions]
+            [markup.goldmark.extensions.passthrough]
+                enable = true
+            [markup.goldmark.extensions.passthrough.delimiters]
+                block = [['\[', '\]'], ['$$', '$$']]
+                inline = [['\(', '\)']]
+
+
+[sitemap]
+changefreq = 'weekly'
+filename = 'sitemap.xml'
+priority = 0.5
+
+[params]
+bio = "Fullstack Developer and Tech enthusiast"
+description = "A blog all around tech, programming and whatever im currently interested in"
+
+    [params.author]
+    name = "xnacly"
+    email = "contact@xnacly.me"
+
+    [params.social]
+    github = "https://github.com/xnacly"
+    rss = "https://xnacly.me/index.xml"
+    email = "mailto:contact@xnacly.me"

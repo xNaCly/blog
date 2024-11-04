@@ -1,0 +1,43 @@
+{{ define "main" }}
+    <div class="centered about">
+        <h3>About Me</h3>
+        {{ .Content }}
+
+        <h3>Papers</h3>
+        {{ range .Site.Data.papers.papers }}
+            <div class="paper">
+                <h4>
+                    <a href="{{ .link }}">{{.title}}</a>
+                </h4>
+                <span class="description">{{ .description }}</span>
+                {{ if .slides }}
+                    <small>
+                        <a href="{{ .slides }}">Slides</a>
+                    </small>
+                {{ end }}
+            </div>
+        {{ end }}
+
+        <h3>Projects</h3>
+        <table class="projects">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{ range .Site.Data.projects.projects }}
+                <tr>
+                    <td class="name">
+                        <a href="{{ .url }}" rel="me" target="_blank">
+                            <span>{{ .title }}</span>
+                        </a>
+                    </td>
+                    <td>{{.description}}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+{{ end }}
