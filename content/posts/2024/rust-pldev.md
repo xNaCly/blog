@@ -255,6 +255,385 @@ I'd say the trait implementation for each node is pretty self explanatory.
 
 ### Test Macros
 
+Lets start off with me saying: I love table driven tests and the way Go allows
+to write them:
+
+```go
+func TestLexerWhitespace(t *testing.T) {
+    cases := []string{"","\t", "\r\n", " "}
+    for _, c := range cases {
+        t.Run(c, func (t *testing.T) {
+            l := Lexer{}
+            l.init(c)
+            l.run()
+        })
+    }
+}
+```
+
+In Go, I define an array of cases and just execute a test function for each
+case `c`. As far as I know, Rust does not offer a similar test method - so
+made one 😼. 
+
+#### Lexer / Tokenizer Tests
+
+```rust
+#[cfg(test)]
+mod should_pass {
+    test_group_pass_assert! {
+        string,
+        string: "'text'"=vec![Type::String(String::from("text"))],
+        empty_string: "''"=vec![Type::String(String::from(""))],
+        string_with_ending: "'str';"=vec![Type::String(String::from("str")), Type::Semicolon]
+    }
+
+    // ...
+}
+
+#[cfg(test)]
+mod should_fail {
+    test_group_fail! {
+        empty_input,
+        empty: "",
+        empty_with_escaped: "\\",
+        empty_with_space: " \t\n\r"
+    }
+
+    // ...
+}
+```
+
+Executing these via `cargo test`, results in the same output I love from table
+driven tests in Go, each function having its own log and feedback
+(`ok`/`fail`):
+
+```text
+running 68 tests
+test lexer::tests::should_pass::string::empty_string ... ok
+test lexer::tests::should_pass::string::string ... ok
+test lexer::tests::should_pass::string::string_with_ending ... ok
+test lexer::tests::should_fail::empty_input::empty ... ok
+test lexer::tests::should_fail::empty_input::empty_with_escaped ... ok
+test lexer::tests::should_fail::empty_input::empty_with_space ... ok
+
+test result: ok. 68 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; 
+finished in 0.00s
+```
+
+The macro accepts the name of the test group, for example: `booleans` and
+`string` and a list of input and expected output pairs. The input is passed to
+the `Lexer` initialisation and the output of the `Lexer.run()` is compared
+against the expected output. Inlining the `test_group_pass_assert!` call for
+`string` results in the code below. Before asserting the equality of the
+resulting token types and the expected token types, a transformation is
+necessary, I map over the token vector and only return their types.
+
+```rust
+mod string {
+    use crate::{lexer, types::Type};
+
+    #[test]
+    fn string() {
+        let input = "'text'".as_bytes().to_vec();
+        let mut l = lexer::Lexer::new(&input, "lexer_tests_pass");
+        let toks = l.run();
+        assert_eq!(l.errors.len(), 0);
+        assert_eq!(
+            toks.into_iter().map(|tok| tok.ttype).collect::<Vec<Type>>(),
+            (vec![Type::String(String::from("text"))])
+        );
+    }
+
+    #[test]
+    fn empty_string() {
+        let input = "''".as_bytes().to_vec();
+        let mut l = lexer::Lexer::new(&input, "lexer_tests_pass");
+        let toks = l.run();
+        assert_eq!(l.errors.len(), 0);
+        assert_eq!(
+            toks.into_iter().map(|tok| tok.ttype).collect::<Vec<Type>>(),
+            (vec![Type::String(String::from(""))])
+        );
+    }
+
+    #[test]
+    fn string_with_ending() {
+        let input = "'str';".as_bytes().to_vec();
+        let mut l = lexer::Lexer::new(&input, "lexer_tests_pass");
+        let toks = l.run();
+        assert_eq!(l.errors.len(), 0);
+        assert_eq!(
+            toks.into_iter().map(|tok| tok.ttype).collect::<Vec<Type>>(),
+            (vec![Type::String(String::from("str")), Type::Semicolon])
+        );
+    }
+}
+```
+
+The counter part `test_group_fail!` for `empty_input!` produces the code below.
+The main difference being the assertion of the resulting token vector to be
+empty and the `Lexer.errors` field to contain at least on error.
+
+```rust
+mod empty_input {
+    use crate::lexer;
+
+    #[test]
+    fn empty() {
+        let source = "".as_bytes().to_vec();
+        let mut l = lexer::Lexer::new(&source, "lexer_tests_fail");
+        let toks = l.run();
+        assert_eq!(toks.len(), 0);
+        assert_ne!(l.errors.len(), 0);
+    }
+
+    #[test]
+    fn empty_with_escaped() {
+        let source = "\\".as_bytes().to_vec();
+        let mut l = lexer::Lexer::new(&source, "lexer_tests_fail");
+        let toks = l.run();
+        assert_eq!(toks.len(), 0);
+        assert_ne!(l.errors.len(), 0);
+    }
+
+    #[test]
+    fn empty_with_space() {
+        let source = " \t\n\r".as_bytes().to_vec();
+        let mut l = lexer::Lexer::new(&source, "lexer_tests_fail");
+        let toks = l.run();
+        assert_eq!(toks.len(), 0);
+        assert_ne!(l.errors.len(), 0);
+    }
+}
+```
+
+Lets take a look at the macros itself, I will not go into detail around the
+macro definition - simply because I explained the meta variable declaration in
+the previous [chapter](#code-deduplication-with-macros). The first macro is
+uesd for the assertions of test with valid inputs - `test_group_pass_assert!`:
+
+```rust
+macro_rules! test_group_pass_assert {
+    ($group_name:ident,$($ident:ident:$input:literal=$expected:expr),*) => {
+    mod $group_name {
+        use crate::{lexer, types::Type};
+
+        $(
+            #[test]
+            fn $ident() {
+                let input = $input.as_bytes().to_vec();
+                let mut l = lexer::Lexer::new(&input, "lexer_tests_pass");
+                let toks = l.run();
+                assert_eq!(l.errors.len(), 0);
+                assert_eq!(toks.into_iter().map(|tok| tok.ttype).collect::<Vec<Type>>(), $expected);
+            }
+        )*
+        }
+    };
+}
+```
+
+While the second is used for invalid inputs and edge case testing with expected
+errors - `test_group_fail!`:
+
+```rust
+macro_rules! test_group_fail {
+    ($group_name:ident,$($name:ident:$value:literal),*) => {
+        mod $group_name {
+        use crate::lexer;
+        $(
+            #[test]
+            fn $name() {
+                let source = $value.as_bytes().to_vec();
+                let mut l = lexer::Lexer::new(&source, "lexer_tests_fail");
+                let toks = l.run();
+                assert_eq!(toks.len(), 0);
+                assert_ne!(l.errors.len(), 0);
+            }
+         )*
+        }
+    };
+}
+```
+
+
+#### Parser Tests
+
+I use the same concepts and almost the same macros in the `parser` module to
+test the results the parser produces, but this time focussing on edge cases and
+full sql statements. For instance the tests expected to pass and to fail for
+the `EXPLAIN` sql statement:
+
+```rust
+#[cfg(test)]
+mod should_pass {
+    test_group_pass_assert! {
+        sql_stmt_prefix,
+        explain: r#"EXPLAIN VACUUM;"#=vec![Type::Keyword(Keyword::EXPLAIN)],
+        explain_query_plan: r#"EXPLAIN QUERY PLAN VACUUM;"#=vec![Type::Keyword(Keyword::EXPLAIN)]
+    }
+}
+
+#[cfg(test)]
+mod should_fail {
+    test_group_fail! {
+        sql_stmt_prefix,
+        explain: r#"EXPLAIN;"#,
+        explain_query_plan: r#"EXPLAIN QUERY PLAN;"#
+    }
+}
+```
+
+Both macros get the `sql_stmt_prefix` as their module names, because thats the
+function, in the parser, responsible for the `EXPLAIN` statement. The failing
+tests check wheter the parser correctly asserts the conditions the sql standard
+lays out, see [sqlite - sql-stmt](https://www.sqlite.org/syntax/sql-stmt.html).
+Specifically, either that a statement follows after the `EXPLAIN` identifier or
+the `QUERY PLAN` and a statement follow.
+
+The difference between these tests and the tests for the lexer are in the way
+the assertions are made. Take a look at the code the macros produce:
+
+```rust
+#[cfg(test)]
+mod should_pass {
+    mod sql_stmt_prefix {
+        use crate::{lexer, parser::Parser, types::Keyword, types::Type};
+
+        #[test]
+        fn explain() {
+            let input = r#"EXPLAIN VACUUM;"#.as_bytes().to_vec();
+            let mut l = lexer::Lexer::new(&input, "parser_test_pass");
+            let toks = l.run();
+            assert_eq!(l.errors.len(), 0);
+            let mut parser = Parser::new(toks, "parser_test_pass");
+            let ast = parser.parse();
+            assert_eq!(parser.errors.len(), 0);
+            assert_eq!(
+                ast.into_iter()
+                    .map(|o| o.unwrap().token().ttype.clone())
+                    .collect::<Vec<Type>>(),
+                (vec![Type::Keyword(Keyword::EXPLAIN)])
+            );
+        }
+
+        #[test]
+        fn explain_query_plan() {
+            let input = r#"EXPLAIN QUERY PLAN VACUUM;"#.as_bytes().to_vec();
+            let mut l = lexer::Lexer::new(&input, "parser_test_pass");
+            let toks = l.run();
+            assert_eq!(l.errors.len(), 0);
+            let mut parser = Parser::new(toks, "parser_test_pass");
+            let ast = parser.parse();
+            assert_eq!(parser.errors.len(), 0);
+            assert_eq!(
+                ast.into_iter()
+                    .map(|o| o.unwrap().token().ttype.clone())
+                    .collect::<Vec<Type>>(),
+                (vec![Type::Keyword(Keyword::EXPLAIN)])
+            );
+        }
+    }
+}
+```
+
+As shown, the `test_group_pass_assert!` macro in the `parser` module starts
+with the same `Lexer` initialisation and empty error vector assertion. However,
+the next step is to initialise the `Parser` structure and after parsing assert
+the outcome - i.e. no errors and nodes with the correct types.
+
+```rust
+#[cfg(test)]
+mod should_fail {
+    mod sql_stmt_prefix {
+        use crate::{lexer, parser::Parser};
+        #[test]
+        fn explain() {
+            let input = r#"EXPLAIN;"#.as_bytes().to_vec();
+            let mut l = lexer::Lexer::new(&input, "parser_test_fail");
+            let toks = l.run();
+            assert_eq!(l.errors.len(), 0);
+            let mut parser = Parser::new(toks, "parser_test_fail");
+            let _ = parser.parse();
+            assert_ne!(parser.errors.len(), 0);
+        }
+
+        #[test]
+        fn explain_query_plan() {
+            let input = r#"EXPLAIN QUERY PLAN;"#.as_bytes().to_vec();
+            let mut l = lexer::Lexer::new(&input, "parser_test_fail");
+            let toks = l.run();
+            assert_eq!(l.errors.len(), 0);
+            let mut parser = Parser::new(toks, "parser_test_fail");
+            let _ = parser.parse();
+            assert_ne!(parser.errors.len(), 0);
+        }
+    }
+}
+```
+
+The `test_group_fail!` macro also extends the same macro from the `lexer`
+module and appends the check for errors after parsing. Both `macro_rules!`:
+
+```rust
+macro_rules! test_group_pass_assert {
+    ($group_name:ident,$($ident:ident:$input:literal=$expected:expr),*) => {
+    mod $group_name {
+        use crate::{lexer, parser::Parser, types::Type, types::Keyword};
+        $(
+            #[test]
+            fn $ident() {
+                let input = $input.as_bytes().to_vec();
+                let mut l = lexer::Lexer::new(&input, "parser_test_pass");
+                let toks = l.run();
+                assert_eq!(l.errors.len(), 0);
+
+                let mut parser = Parser::new(toks, "parser_test_pass");
+                let ast = parser.parse();
+                assert_eq!(parser.errors.len(), 0);
+                assert_eq!(ast.into_iter()
+                    .map(|o| o.unwrap().token().ttype.clone())
+                    .collect::<Vec<Type>>(), $expected);
+            }
+        )*
+        }
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! test_group_fail {
+    ($group_name:ident,$($ident:ident:$input:literal),*) => {
+    mod $group_name {
+        use crate::{lexer, parser::Parser};
+        $(
+            #[test]
+            fn $ident() {
+                let input = $input.as_bytes().to_vec();
+                let mut l = lexer::Lexer::new(&input, "parser_test_fail");
+                let toks = l.run();
+                assert_eq!(l.errors.len(), 0);
+
+                let mut parser = Parser::new(toks, "parser_test_fail");
+                let _ = parser.parse();
+                assert_ne!(parser.errors.len(), 0);
+            }
+        )*
+        }
+    };
+}
+```
+
+### Macro Pitfalls
+
+- `rust-analyzer` plays badly inside `macro_rules!`
+    - no real intellisense
+    - no goto definition
+    - no hover for signatures of literals and language constructs
+- `cargo fmt` does not format or indent inside of `macro_rules!` and macro invokations
+- `treesitter` (yes I use neovim, btw 😼) and `chroma` (used on this site)
+  sometimes struggle with syntax highlighting of `macro_rules!`
+- documentation is sparse at best
+
 ## Iterating characters
 ## Matching characters
 ## Lexer and parser error handling
