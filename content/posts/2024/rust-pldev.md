@@ -39,7 +39,7 @@ developing said software.
 Macros work different in most languages. However they are used for mostly the
 same reasons: code deduplication and less repetition.
 
-### AST Macros
+### Abstract Syntax Tree Nodes
 
 A node for a statement in `sqleibniz` implementation is defined as follows:
 
@@ -253,7 +253,7 @@ pub struct $node_name {
 
 I'd say the trait implementation for each node is pretty self explanatory.
 
-### Test Macros
+### Testing
 
 Lets start off with me saying: I love table driven tests and the way Go allows
 to write them:
@@ -633,7 +633,7 @@ macro_rules! test_group_fail {
   sometimes struggle with syntax highlighting of `macro_rules!`
 - documentation is sparse at best
 
-## Matching characters
+## Matching Characters
 
 When writing a lexer, comparing characters is the part everything else depends
 on. Rust makes this enjoyable via the `matches!` macro and the patterns the
@@ -679,9 +679,8 @@ pub fn run(&mut self) -> Vec<Token> {
             ',' => r.push(self.single(Type::Comma)),
             '%' => r.push(self.single(Type::Percent)),
             _ => {
-                // actually there is error handling here, but its omitted for the
-                // next chapter
-                panic!();
+                // omitted error handling for unknown symbols
+                panic!("whoops");
             } 
         }
         self.advance();
@@ -693,6 +692,143 @@ pub fn run(&mut self) -> Vec<Token> {
 Patterns in `match` statement and `matches` blocks are arguably the most
 useful feature of Rust.
 
-## Matching tokens
-## Lexer and parser error handling
-## Pretty errors
+## Matching Tokens
+
+Once the lexer converts the character stream into a stream of `Token` structure
+instances with positional and type information, the parser can consume this
+stream and produce an abstract syntax tree. The parser has to recognise
+patterns in its input by detecting token types. This again is a case where
+Rusts `match` statement shines.
+
+Each `Token` contains a `t` field for its type, see below.
+
+```rust
+pub use self::keyword::Keyword;
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Type {
+    Keyword(keyword::Keyword),
+    Ident(String),
+    Number(f64),
+    String(String),
+    Blob(Vec<u8>),
+    Boolean(bool),
+    ParamName(String),
+    Param(usize),
+
+    Dot,
+    Asteriks,
+    Semicolon,
+    Percent,
+    Comma,
+
+    Eof,
+}
+```
+
+Lets look at the `sql_stmt_prefix` method of the parser. This function parses
+the `EXPLAIN` statement, which - according to the sqlite documentation -
+prefixes all other sql statements, hence the name. The corresponding syntax
+diagram is shown below:
+
+![sql_stmt syntax diagram](/rust_lex_parse/sql_stmt.png)
+
+The implementation follows this diagram. The `Explain` stmt is optional, thus
+if the current token type does not match `Type::Keyword(Keyword::EXPLAIN)`, we
+call the `sql_stmt` function to processes the statements on the right of
+the syntax diagram. 
+
+If the token matches it gets consumed and the next check is for the second
+possible path in the `EXPLAIN` diagram: `QUERY PLAN`. This requires both the
+`QUERY` and the `PLAN` keywords consecutively - both are consumed.
+
+```rust
+impl<'a> Parser<'a> {
+    fn sql_stmt_prefix(&mut self) -> Option<Box<dyn Node>> {
+        match self.cur()?.ttype {
+            Type::Keyword(Keyword::EXPLAIN) => {
+                let mut e = Explain {
+                    t: self.cur()?.clone(),
+                    child: None,
+                };
+                self.advance(); // skip EXPLAIN
+
+                // path for EXPLAIN->QUERY->PLAN
+                if self.is(Type::Keyword(Keyword::QUERY)) {
+                    self.consume(Type::Keyword(Keyword::QUERY));
+                    self.consume(Type::Keyword(Keyword::PLAN));
+                } // else path is EXPLAIN->*_stmt
+
+                e.child = self.sql_stmt();
+                Some(Box::new(e))
+            }
+            _ => self.sql_stmt(),
+        }
+    }
+}
+```
+
+This shows the basic usage of pattern matching in the parser. An other
+example is the `literal_value` function, its sole purpose is to create the
+`Literal` node for all literals. 
+
+![literal_value syntax diagram](/rust_lex_parse/literal_value.png)
+
+
+It discards most embedded enum values, but checks for some specific keywords,
+because they are considered keywords, while being literals:
+
+```rust
+impl<'a> Parser<'a> {
+    /// see: https://www.sqlite.org/syntax/literal-value.html
+    fn literal_value(&mut self) -> Option<Box<dyn Node>> {
+        let cur = self.cur()?;
+        match cur.ttype {
+            Type::String(_)
+            | Type::Number(_)
+            | Type::Blob(_)
+            | Type::Keyword(Keyword::NULL)
+            | Type::Boolean(_)
+            | Type::Keyword(Keyword::CURRENT_TIME)
+            | Type::Keyword(Keyword::CURRENT_DATE)
+            | Type::Keyword(Keyword::CURRENT_TIMESTAMP) => {
+                let s: Option<Box<dyn Node>> = Some(Box::new(Literal { t: cur.clone() }));
+                self.advance();
+                s
+            }
+            _ => {
+                // omitted error handling for invalid literals
+                panic!("whoops");
+            }
+        }
+    }
+}
+```
+
+## Lexer and Parser Error Handling
+
+While the implementation itself is repetitive and not that interesting, I still
+wanted to showcase the way both the lexer and the parser handle errors and how
+these errors are displayed to the user. A typical error would be to miss a
+semicolon at the end of a sql statement:
+
+```sql
+-- ./vacuum.sql
+-- rebuilding the database into a new file
+VACUUM INTO 'optimized.db'
+```
+
+Passing this file to `sqleibniz` promptly errors:
+
+![vacuum error](/rust_lex_parse/vacuum_err.png)
+
+## Honorable Mentions
+
+### Dealing with Optionals
+
+
+#### is_some_and
+#### map
+#### map_or
+
+### Iterators 💖
