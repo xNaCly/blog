@@ -600,7 +600,6 @@ macro_rules! test_group_pass_assert {
     };
 }
 
-#[allow(unused_macros)]
 macro_rules! test_group_fail {
     ($group_name:ident,$($ident:ident:$input:literal),*) => {
     mod $group_name {
@@ -634,8 +633,66 @@ macro_rules! test_group_fail {
   sometimes struggle with syntax highlighting of `macro_rules!`
 - documentation is sparse at best
 
-## Iterating characters
 ## Matching characters
+
+When writing a lexer, comparing characters is the part everything else depends
+on. Rust makes this enjoyable via the `matches!` macro and the patterns the
+`match` statement accepts. For instance, checking if the current character is
+a valid sqlite number can be done by a simple `matches!` macro invocation:
+
+```rust
+/// Specifically matches https://www.sqlite.org/syntax/numeric-literal.html
+fn is_sqlite_num(&self) -> bool {
+    matches!(self.cur(), 
+             // exponent notation with +-
+             '+' | '-' |
+             // sqlite allows for separating numbers by _
+             '_' |
+             // floating point
+             '.' |
+             // hexadecimal
+             'a'..='f' | 'A'..='F' |
+             // decimal
+             '0'..='9')
+}
+```
+
+Similarly testing for identifiers is as easy as the above:
+
+```rust
+fn is_ident(&self, c: char) -> bool {
+    matches!(c, 'a'..='z' | 'A'..='Z' | '_' | '0'..='9')
+}
+```
+
+Symbol detection in the main loop of the lexer works exactly the same:
+
+```rust
+pub fn run(&mut self) -> Vec<Token> {
+    let mut r = vec![];
+    while !self.is_eof() {
+        match self.cur() {
+            // skipping whitespace
+            '\t' | '\r' | ' ' | '\n' => {}
+            '*' => r.push(self.single(Type::Asteriks)),
+            ';' => r.push(self.single(Type::Semicolon)),
+            ',' => r.push(self.single(Type::Comma)),
+            '%' => r.push(self.single(Type::Percent)),
+            _ => {
+                // actually there is error handling here, but its omitted for the
+                // next chapter
+                panic!();
+            } 
+        }
+        self.advance();
+    }
+    r
+}
+```
+
+Patterns in `match` statement and `matches` blocks are arguably the most
+useful feature of Rust.
+
+## Matching tokens
 ## Lexer and parser error handling
 ## Pretty errors
-## Matching tokens
