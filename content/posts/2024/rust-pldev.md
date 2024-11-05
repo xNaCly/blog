@@ -2,7 +2,6 @@
 title: "Why I love Rust for tokenising and parsing"
 summary: "Macros, iterators, patterns, error handling and match make Rust almost perfect"
 date: 2024-11-04
-draft: true
 tags:
 - rust
 - sql
@@ -805,30 +804,210 @@ impl<'a> Parser<'a> {
 }
 ```
 
-## Lexer and Parser Error Handling
+## Fancy error display
 
-While the implementation itself is repetitive and not that interesting, I still
-wanted to showcase the way both the lexer and the parser handle errors and how
-these errors are displayed to the user. A typical error would be to miss a
-semicolon at the end of a sql statement:
+> While the implementation itself is repetitive and not that interesting, I still
+> wanted to showcase the way both the lexer and the parser handle errors and how
+> these errors are displayed to the user. A typical error would be to miss a
+> semicolon at the end of a sql statement:
+> 
+> ```sql
+> -- ./vacuum.sql
+> -- rebuilding the database into a new file
+> VACUUM INTO 'optimized.db'
+> ```
+> 
+> Passing this file to `sqleibniz` promptly errors:
+> 
+> ![vacuum error](/rust_lex_parse/vacuum_err.png)
+> 
 
-```sql
--- ./vacuum.sql
--- rebuilding the database into a new file
-VACUUM INTO 'optimized.db'
+## Optionals
+
+Rust error handling is fun to do and propagation with the `?`-Operator just
+makes sense. But Rust goes even further, not only can I modify the value inside
+of the `Option` if there is one, I can even check conditions or provide default
+values.
+
+### is_some_and
+
+Sometimes you simply need to check if the next character of the input stream
+is available and passes a predicate. `is_some_and` exists for this reason: 
+
+```rust
+fn next_is(&mut self, c: char) -> bool {
+    self.source
+        .get(self.pos + 1)
+        .is_some_and(|cc| *cc == c as u8)
+}
+
+fn is(&self, c: char) -> bool {
+    self.source.get(self.pos).is_some_and(|cc| *cc as char == c)
+}
 ```
 
-Passing this file to `sqleibniz` promptly errors:
+The above is really nice to read, the following not so much:
 
-![vacuum error](/rust_lex_parse/vacuum_err.png)
+```rust
+fn next_is(&mut self, c: char) -> bool {
+    match self.source.get(self.pos + 1) {
+        Some(cc) => *cc == c as u8,
+        _ => false,
+    }
+}
 
-## Honorable Mentions
+fn is(&self, c: char) -> bool {
+    match self.source.get(self.pos) {
+        Some(cc) => *cc as char == c,
+        _ => false,
+    }
+}
+```
 
-### Dealing with Optionals
+### map
+
+Since the input is a Vector of `u8`, not a Vector of `char`, this conversion is done with `map`:
+
+```rust
+fn next(&self) -> Option<char> {
+    self.source.get(self.pos + 1).map(|c| *c as char)
+}
+```
+
+Instead of unwrapping and rewrapping the updated value:
+
+```rust
+fn next(&self) -> Option<char> {
+    match self.source.get(self.pos + 1) {
+        Some(c) => Some(*c as char),
+        _ => None,
+    }
+}
+```
+
+### map_or
+
+In a similar fashion, the sqleibniz parser uses `map_or` to return
+the check for a type, but only if the current token is `Some`:
+
+```rust
+fn next_is(&self, t: Type) -> bool {
+    self.tokens
+        .get(self.pos + 1)
+        .map_or(false, |tok| tok.ttype == t)
+}
+
+fn is(&self, t: Type) -> bool {
+    self.cur().map_or(false, |tok| tok.ttype == t)
+}
+```
+
+Again, replacing the not so idiomatic solutions:
+
+```rust
+fn next_is(&self, t: Type) -> bool {
+    match self.tokens.get(self.pos + 1) {
+        None => false,
+        Some(token) => token.ttype == t,
+    }
+}
+
+fn is(&self, t: Type) -> bool {
+    if let Some(tt) = self.cur() {
+        return tt.ttype == t;
+    }
+    false
+}
+```
 
 
-#### is_some_and
-#### map
-#### map_or
+## Iterators 💖
 
-### Iterators 💖
+### Filtering characters
+
+Rust number parsing does not allow `_`, sqlite number parsing
+accepts `_`, thus the lexer also consumes them, but filters these
+characters before parsing the input via the rust number parsing
+logic:
+
+```rust
+let str = self
+    .source
+    .get(start..self.pos)
+    .unwrap_or_default()
+    .iter()
+    .filter_map(|&u| match u as char {
+        '_' => None,
+        _ => Some(u as char),
+    })
+    .collect::<String>();
+```
+
+{{<callout type="Tip">}}
+I know you arent supposed to use `unwrap` and all derivates,
+however in this situation the parser either way does not accept
+empty strings as valid numbers, thus it will fail either way on
+the default value.
+{{</callout>}}
+
+In go i would have to first iterate the character list with a for
+loop and write each byte into a string buffer (in which each write
+could fail btw, or at least can return an `error`) and afterwards
+I have to create a `string` from the `strings.Builder` structure.
+
+```go
+s := source[start:l.pos]
+b := strings.Builder{}
+b.Grow(len(s))
+for _, c := range s {
+    if c != '_' {
+        b.WriteByte(c)
+    }
+}
+s = b.String()
+```
+
+### Checking characters
+
+Sqlite accepts hexadecimal data as blobs: `x'<hex>'`, to verify
+the input is correct, I have to check every character in this
+array to be a valid hexadecimal. Furthermore I need positional
+information for correct error display, for this I reuse the
+`self.string()` method and use the `chars()` iterator creating
+function and the `enumerate` function.
+
+```rust
+if let Ok(str_tok) = self.string() {
+    if let Type::String(str) = &str_tok.ttype {
+        let mut had_bad_hex = false;
+        for (idx, c) in str.chars().enumerate() {
+            if !matches!(c, 'a'..='f' | 'A'..='F' | '0'..='9') {
+                // error creation and so on omitted here 
+                had_bad_hex = true;
+                break;
+            }
+        }
+        if had_bad_hex {
+            break;
+        }
+
+        // valid hexadecimal data in blob
+    }
+} else {
+    // error handling omitted
+}
+```
+
+The error display produces the following error if an invalid
+character inside of a blob is found:
+
+![invalid blob data](/rust_lex_parse/bad_blob.png)
+
+
+{{<callout type="Info">}} 
+Thanks for reading this far 😼.
+
+If you found an error (technical or semantic), please email me a nudge in the
+right direction at [contact@xnacly.me](mailto://contact@xnacly.me)
+(`contact@xnacly.me`).
+{{</callout>}}
