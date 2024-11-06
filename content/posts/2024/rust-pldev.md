@@ -7,7 +7,7 @@ tags:
 - sql
 ---
 
-> I am currently writing a analysis tool for Sql: [`sqleibniz`](github.com/xnacly/sqleibniz), specifically for the sqlite
+> I am currently writing a analysis tool for Sql: [`sqleibniz`](https://github.com/xnacly/sqleibniz), specifically for the sqlite
 > dialect. 
 >
 > The goal is to perform static analysis for sql input, including: syntax
