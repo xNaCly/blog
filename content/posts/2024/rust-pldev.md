@@ -88,7 +88,7 @@ I want a macro that is able to:
 
 - define a structure with a given identifier and a doc comment
 - add arbitrary fields to the structure
-- satisfying the `Node` trait by implementing `fn token(&self) ->&Token`
+- satisfying the `Node` trait by implementing `fn token(&self) -> &Token`
 
 Lets take a look at the full code I need the macro to produce for the
 `Literal` and the `Explain` nodes. While the first one has no further fields
@@ -936,15 +936,13 @@ let str = self
     .get(start..self.pos)
     .unwrap_or_default()
     .iter()
-    .filter_map(|&u| match u as char {
-        '_' => None,
-        _ => Some(u as char),
-    })
+    .map(|c| *c as char)
+    .filter(|c| *c != '_')
     .collect::<String>();
 ```
 
 {{<callout type="Tip">}}
-I know you arent supposed to use `unwrap` and all derivates,
+I know you aren't supposed to use `unwrap` and all derivates,
 however in this situation the parser either way does not accept
 empty strings as valid numbers, thus it will fail either way on
 the default value.
@@ -981,7 +979,7 @@ if let Ok(str_tok) = self.string() {
     if let Type::String(str) = &str_tok.ttype {
         let mut had_bad_hex = false;
         for (idx, c) in str.chars().enumerate() {
-            if !matches!(c, 'a'..='f' | 'A'..='F' | '0'..='9') {
+            if !c.is_ascii_hexdigit() {
                 // error creation and so on omitted here 
                 had_bad_hex = true;
                 break;
