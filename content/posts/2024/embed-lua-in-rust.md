@@ -2,7 +2,6 @@
 title: "Embedding Lua in sqleibniz with Rust"
 date: 2024-12-16T11:12:45+01:00
 summary: "Improving the SQL DX one blog article at a time"
-draft: true
 tags:
   - rust
   - sqleibniz
@@ -135,14 +134,14 @@ leibniz = {
             --```
             --    node: {
             --     kind: string,
-            --     text: string,
+            --     content: string,
             --     children: node[],
             --    }
             --```
             --
             hook = function(node)
                 if node.kind == "ident" then
-                    if string.match(node.text, "%u") then
+                    if string.match(node.content, "%u") then
                         -- returing an error passes the diagnostic to sqleibniz,
                         -- thus a pretty message with the name of the hook, the
                         -- node it occurs and the message passed to error() is
@@ -158,7 +157,7 @@ leibniz = {
             hook = function(node)
                 local max_size = 12
                 if node.kind == "ident" then
-                    if string.len(node.text) >= max_size then
+                    if string.len(node.content) >= max_size then
                         error("idents shouldn't be longer than " .. max_size .. " characters")
                     end
                 end
@@ -172,8 +171,267 @@ Since no one uses sqleibniz yet and I have no semantic versioning in place, I
 do not care about breaking backwards compatibility and just made the change,
 small projects ROCK!
 
-## Accessing Lua Tables as Rust data structures
+## Rust to Lua, Lua to Rust
 
-## Injecting Lua functions into sqleibniz
+Since the lua configuration is only useful when accessed inside the rust
+application, I created an equivalent data structure, containg both the disabled
+rules and the hooks.
+
+```rust
+pub struct Config {
+    pub disabled_rules: Vec<Rule>,
+    pub hooks: Option<Vec<Hook>>,
+}
+```
+
+> I use the [`mlua`](https://crates.io/crates/mlua) package, because it has
+> serde support and a lot of examples, even though I no longer use this
+> feature.
+>
+> ```toml
+> mlua = { version = "0.10.2", features = ["lua54", "vendored"] }
+> ```
+>
+> The `vendored`-feature allows me to not care about dependency managment regarding lua:
+>
+> > `vendored`: build static Lua(JIT) library from sources during mlua compilation using lua-src or luajit-src crates
+
+mlua uses the `FromLua` and `IntoLua` traits for converting rust types to lua
+types and vice versa.
+
+```rust
+// from mlua/src/traits.rs
+
+/// Trait for types convertible from [`Value`].
+pub trait FromLua: Sized {
+    /// Performs the conversion.
+    fn from_lua(value: Value, lua: &Lua) -> Result<Self>;
+}
+```
+
+mlua implements these traits for all primitive types and some ADT, while the
+`serde`-feature enables the serialization and deserialization of structures
+annotated with `serde::Deserialize` and `serde::Serialize`. The only issue I
+found with the above, is the ability to deserialize lua functions
+(`mlua::Function`). Serde does not support these, thus I implemented `FromLua`
+and `IntoLua` for my types on my own, taking serde out of the equation:
+
+```rust
+impl FromLua for Config {
+    fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
+        let table: Table = lua.unpack(value)?;
+        let disabled_rules: Vec<Rule> = table.get("disabled_rules").unwrap_or_else(|_| vec![]);
+        let hooks: Option<Vec<Hook>> = table.get("hooks").ok();
+        Ok(Self {
+            disabled_rules,
+            hooks,
+        })
+    }
+}
+```
+
+> Since the context (`lua`) is passed into the conversion, we can unpack the
+> value to convert, because we want to work directly on the `mlua::Value` type.
+
+Implementing `FromLua` for `Config` requires `sqleibniz::types::config::Rule`
+and `sqleibniz::types::config::Hook` to implement `FromLua` too:
+
+```rust
+pub enum Rule {
+    NoContent,
+    NoStatements,
+    Unimplemented,
+    UnknownKeyword,
+    BadSqleibnizInstruction,
+    UnterminatedString,
+    UnknownCharacter,
+    InvalidNumericLiteral,
+    InvalidBlob,
+    Syntax,
+    Semicolon,
+}
+
+impl mlua::FromLua for Rule {
+    fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
+        let value: String = lua.unpack(value)?;
+        Ok(match value.as_str() {
+            "NoContent" => Self::NoContent,
+            "NoStatements" => Self::NoStatements,
+            "Unimplemented" => Self::Unimplemented,
+            "UnterminatedString" => Self::UnterminatedString,
+            "UnknownCharacter" => Self::UnknownCharacter,
+            "InvalidNumericLiteral" => Self::InvalidNumericLiteral,
+            "InvalidBlob" => Self::InvalidBlob,
+            "Syntax" => Self::Syntax,
+            "Semicolon" => Self::Semicolon,
+            "BadSqleibnizInstruction" => Self::BadSqleibnizInstruction,
+            "UnknownKeyword" => Self::UnknownKeyword,
+            _ => {
+                return Err(mlua::Error::FromLuaConversionError {
+                    from: "string",
+                    to: "sqleibniz::rules::Rule".into(),
+                    message: Some("Unknown rule name".into()),
+                })
+            }
+        })
+    }
+}
+```
+
+The same for `HookContext`, but a lot shorter:
+
+```rust
+pub struct Hook {
+    pub name: String,
+    /// node is optional, because omitting it executes the hook for every encountered node
+    pub node: Option<String>,
+    pub hook: Option<Function>,
+}
+
+impl mlua::FromLua for Hook {
+    fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
+        let table: Table = lua.unpack(value)?;
+        let name = table.get("name")?;
+        let node = table.get("node").ok();
+        let hook: Option<Function> = table.get("hook").ok();
+        Ok(Self { name, node, hook })
+    }
+}
+```
 
 ## Calling Lua functions from Rust
+
+Since we now have the ability to convert a lua value to a `mlua::Function`, we
+can call said function and provide the context it needs as its argument(s):
+
+```rust
+impl Hook {
+    pub fn exec(&self, arg: HookContext) -> mlua::Result<()> {
+        if let Some(hook) = &self.hook {
+            hook.call(arg)?
+        }
+        Ok(())
+    }
+}
+```
+
+The `sqleibniz::types::ctx::HookContext` represents the context I want every hook to have, specifically:
+
+```rust
+pub struct HookContext {
+    /// [Self::kind] will be the name of the node for most nodes, except nodes
+    /// that hold different kinds, such as Literal, which can be an Ident, a
+    /// String, a Number, etc.
+    pub kind: String,
+    /// [Self::content] holds the textual representation of a nodes contents if
+    /// it is [crates::parser::nodes::Literal].
+    pub content: Option<String>,
+    pub children: Vec<HookContext>,
+}
+```
+
+Due to us passing this structure to `Hook::exec` and therefore to
+`mlua::Function::call` it has to implement the `IntoLua` trait:
+
+```rust
+impl IntoLua for HookContext {
+    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        let table = lua.create_table()?;
+        table.set("kind", self.kind)?;
+        table.set("text", self.content.unwrap_or_else(|| String::new()))?;
+        table.set("children", self.children)?;
+        lua.pack(table)
+    }
+}
+```
+
+## Putting it all together
+
+Inside of the lua scripting context, we now are able to access all of these fields:
+
+```lua
+leibniz = {
+    hooks = {
+        {
+            name = "hook test",
+            hook = function(node)
+                print(node.kind .. " " .. node.text .. " " .. #node.children)
+            end
+        }
+    }
+}
+```
+
+Executing this hook with the `HookContext` ends in the
+expected result: `literal this_is_an_ident 0`.
+
+The following shows the full example I use for sqleibniz:
+
+```rust
+fn configuration(lua: &mlua::Lua, file_name: &str) -> Result<Config, String> {
+    let conf_str = fs::read_to_string(file_name)
+        .map_err(|err| format!("Failed to read configuration file '{}': {}", file_name, err))?;
+
+    // load the lua configuration string, execute it
+    lua.load(conf_str)
+        .set_name(file_name)
+        .exec()
+        .map_err(|err| format!("{}: {}", file_name, err))?;
+    let globals = lua.globals();
+
+    let raw_conf = globals
+        .get::<mlua::Value>("leibniz")
+        .map_err(|err| format!("{}: {}", file_name, err))?;
+    // if the leibniz table does not exist, mlua does not return an Err, we
+    // have to check for this case
+    if raw_conf.is_nil() {
+        return Err(format!(
+            "{}: leibniz table is missing from configuration",
+            file_name
+        ));
+    }
+
+    let conf: Config = lua
+         // calls mlua::FromLua(conf)
+        .unpack(raw_conf)
+        .map_err(|err| format!("{}: {}", file_name, err))?;
+    Ok(conf)
+}
+
+fn main() {
+    let mut config = Config {
+        disabled_rules: vec![],
+        hooks: None,
+    };
+
+    // lua defined here because it would be dropped at the end of configuration(), in the
+    // future this will probably need to be moved one scope up to life long enough for analysis
+    let lua = mlua::Lua::new();
+    match configuration(&lua, &args.config) {
+        Ok(conf) => config = conf,
+        Err(err) => {
+            error::warn(&err.to_string());
+        }
+    }
+
+    if let Some(hooks) = &config.hooks {
+        let ctx = types::ctx::HookContext {
+            kind: "literal".into(),
+            content: Some("this_is_an_ident".into()),
+            children: vec![],
+        };
+
+        for hook in hooks {
+            let _ = hook.exec(ctx.clone());
+        }
+    }
+}
+```
+
+If the configuration has invalid syntax or the `leibniz` table is missing, a
+warning is omitted and sqleibniz falls back to the default empty configuration:
+
+```text
+warn: leibniz.lua: syntax error: [string "leibniz.lua"]:6: '}' expected (to close '{' at line 4) near 'bled_rules'
+warn: leibniz.lua: leibniz table is missing from configuration
+```
