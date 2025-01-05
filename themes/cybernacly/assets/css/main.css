@@ -276,6 +276,12 @@ nav:not(#TableOfContents) {
       max-width: 100%;
     }
 
+    .codeblock {
+      max-width: fit-content;
+      padding: calc(var(--spacing) / 4);
+    }
+
+    .codeblock,
     code,
     pre {
       background-color: var(--background-lighter);
