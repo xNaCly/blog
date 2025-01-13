@@ -1,10 +1,9 @@
 ---
 title: "Optimizing libjson, or: beating encoding/json by at least 2.5x"
 date: 2025-01-10
-summary: "Benchmarking, analysing and improving my JSON parsing performance"
+summary: "Benchmarking, analysing and improving JSON parsing performance"
 tags:
   - go
-draft: true
 ---
 
 Libjson is a JSON parsing/interaction library for which I attempted to go the
@@ -412,42 +411,42 @@ This change replaces every `parser::expect` invocation with the body of the func
 
 ```go
 func (p *parser) array() ([]any, error) {
-        if p.cur_tok.Type != t_left_braket {
-                return nil, fmt.Errorf("Unexpected %q at this position, expected %q", tokennames[p.cur_tok.Type], tokennames[t_left_braket])
-        }
-        err := p.advance()
-        if err != nil {
+    if p.cur_tok.Type != t_left_braket {
+        return nil, fmt.Errorf("Unexpected %q at this position, expected %q", tokennames[p.cur_tok.Type], tokennames[t_left_braket])
+    }
+    err := p.advance()
+    if err != nil {
+        return nil, err
+    }
+
+    if p.cur_tok.Type == t_right_braket {
+            return []any{}, p.advance()
+    }
+
+    a := make([]any, 0, 8)
+
+    for p.cur_tok.Type != t_eof && p.cur_tok.Type != t_right_braket {
+        if len(a) > 0 {
+            if p.cur_tok.Type != t_comma {
+                return nil, fmt.Errorf("Unexpected %q at this position, expected %q", tokennames[p.cur_tok.Type], tokennames[t_comma])
+            }
+            err := p.advance()
+            if err != nil {
                 return nil, err
+            }
         }
-
-        if p.cur_tok.Type == t_right_braket {
-                return []any{}, p.advance()
+        node, err := p.expression()
+        if err != nil {
+            return nil, err
         }
+        a = append(a, node)
+    }
 
-        a := make([]any, 0, 8)
+    if p.cur_tok.Type != t_right_braket {
+        return nil, fmt.Errorf("Unexpected %q at this position, expected %q", tokennames[p.cur_tok.Type], tokennames[t_right_braket])
+    }
 
-        for p.cur_tok.Type != t_eof && p.cur_tok.Type != t_right_braket {
-                if len(a) > 0 {
-                        if p.cur_tok.Type != t_comma {
-                                return nil, fmt.Errorf("Unexpected %q at this position, expected %q", tokennames[p.cur_tok.Type], tokennames[t_comma])
-                        }
-                        err := p.advance()
-                        if err != nil {
-                                return nil, err
-                        }
-                }
-                node, err := p.expression()
-                if err != nil {
-                        return nil, err
-                }
-                a = append(a, node)
-        }
-
-        if p.cur_tok.Type != t_right_braket {
-                return nil, fmt.Errorf("Unexpected %q at this position, expected %q", tokennames[p.cur_tok.Type], tokennames[t_right_braket])
-        }
-
-        return a, p.advance()
+    return a, p.advance()
 }
 ```
 
@@ -459,10 +458,137 @@ The results of this change:
 | libjson before | 12ms (-12.9ms)  | 49.8ms (-66.9ms) | 93.8ms (-134.1ms) |
 | libjson        | 11.5ms (-0.5ms) | 48.5ms (-1.3ms)  | 91ms (-2.3ms)     |
 
-| backend        | ns/op                    | B/op                    | allocs/op         |
-| -------------- | ------------------------ | ----------------------- | ----------------- |
-| encoding/json  | 134_535_103              | 39_723_750              | 650_033           |
-| libjson before | 50_504_689 (-84_030_414) | 34_744_392 (-4_979_358) | 500_024(-150_009) |
-| libjson        | 49_262_503 (-1_242_186)  | 34_744_160 (-232)       | 500_024           |
+| backend        | ns/op                    | B/op                    | allocs/op          |
+| -------------- | ------------------------ | ----------------------- | ------------------ |
+| encoding/json  | 134_535_103              | 39_723_750              | 650_033            |
+| libjson before | 50_504_689 (-84_030_414) | 34_744_392 (-4_979_358) | 500_024 (-150_009) |
+| libjson        | 49_262_503 (-1_242_186)  | 34_744_160 (-232)       | 500_024            |
 
 ## Parallelising lexer::next and parser::parse
+
+Moving from lexing on demand to possibly prelexing in paralell did not
+result a decrease in runtime, but regressed the performance towards the
+`encoding/json` results.
+
+> I tested buffered channel sizes from 2,8,16,32 up until 50k (because thats
+> the number i use for the amount of objects for the benchmarks) and none of
+> these tests yielded any runtime improvements.
+
+Currently said on demand lexing is attached to the parser as follows:
+
+```go
+type parser struct {
+	l       lexer
+	cur_tok token
+}
+
+func (p *parser) advance() error {
+	t, err := p.l.next()
+	p.cur_tok = t
+	if p.cur_tok.Type == t_eof && err != nil {
+		return err
+	}
+	return nil
+}
+```
+
+Replacing this with a channel and moving the tokenisation to a go routine:
+
+```go
+type parser struct {
+	l       lexer
+	c       <-chan token
+	cur_tok token
+}
+
+func (p *parser) advance() {
+	p.cur_tok = <-p.c
+}
+```
+
+Previously, the lexer and parser invocation worked as shown below:
+
+```go
+func New(data []byte) (JSON, error) {
+	p := parser{l: lexer{data: data}}
+	obj, err := p.parse()
+	if err != nil {
+		return JSON{}, err
+	}
+	return JSON{obj}, nil
+}
+```
+
+Now we have to manage error handling, channel creation, etc:
+
+```go
+const chanSize = 64
+
+func New(data []byte) (JSON, error) {
+	l := lexer{data: data}
+	c := make(chan token, chanSize)
+	var lexerErr error
+	go func() {
+		for {
+			if tok, err := l.next(); err == nil {
+				if tok.Type == t_eof {
+					break
+				}
+				c <- tok
+			} else {
+				lexerErr = err
+				break
+			}
+		}
+		close(c)
+		c = nil
+	}()
+	p := parser{l: l, c: c}
+	obj, err := p.parse()
+	if lexerErr != nil {
+		return JSON{}, lexerErr
+	}
+	if err != nil {
+		return JSON{}, err
+	}
+	return JSON{obj}, nil
+}
+```
+
+> The changes are kept in the
+> [`paralell-lexer-and-parser`](https://github.com/xNaCly/libjson/tree/parallel-lexer-and-parser)
+> branch.
+
+Benchmarking this sadly did not satisfy my search for better performance, but I
+wanted to include it either way:
+
+| backend        | 1mb              | 5mb              | 10mb               |
+| -------------- | ---------------- | ---------------- | ------------------ |
+| encoding/json  | 24.9ms           | 116.7ms          | 225.9ms            |
+| libjson before | 11.5ms (-13.4ms) | 48.5ms (-68.2ms) | 91ms (-136.4ms)    |
+| libjson        | 24.3ms (+12.8ms) | 112.5ms (+64ms)  | 218.6ms (+127.6ms) |
+
+| backend        | ns/op                     | B/op                    | allocs/op          |
+| -------------- | ------------------------- | ----------------------- | ------------------ |
+| encoding/json  | 134_535_103               | 39_723_750              | 650_033            |
+| libjson before | 50_504_689 (-85_272_600)  | 34_744_392 (-4_979_590) | 500_024 (-150_009) |
+| libjson        | 125_533_704 (+75_029_015) | 35_949_392 (+1_205_000) | 500_031 (+7)       |
+
+## Results
+
+Again, these result from design choices, benchmarking, profiling and
+exploration of many things similar to the parallelisation attempt above.
+
+| backend        | 1mb              | 5mb              | 10mb            |
+| -------------- | ---------------- | ---------------- | --------------- |
+| encoding/json  | 24.9ms           | 116.7ms          | 225.9ms         |
+| libjson before | 11.5ms (-13.4ms) | 48.5ms (-68.2ms) | 91ms (-136.4ms) |
+
+| backend       | ns/op                    | B/op                    | allocs/op          |
+| ------------- | ------------------------ | ----------------------- | ------------------ |
+| encoding/json | 134_535_103              | 39_723_750              | 650_033            |
+| libjson       | 50_504_689 (-85_272_600) | 34_744_392 (-4_979_590) | 500_024 (-150_009) |
+
+Summing up, libjson is currently around 2.5x faster than `encoding/json`. For
+50k objects in a json array, it uses 5MB less memory and makes 150k less
+allocations - pretty good.
