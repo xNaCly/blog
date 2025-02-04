@@ -5,6 +5,8 @@ summary: "Using Treesitter in neovim to conditionally highlight code snippets"
 tags:
     - nvim
     - treesitter
+aliases:
+    - /2024/treesitter-neovim
 ---
 
 Since i am currently working on a little tool for synching my old macbook pro,

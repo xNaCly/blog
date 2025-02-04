@@ -4,6 +4,8 @@ date: 2025-01-10
 summary: "Benchmarking, analysing and improving JSON parsing performance"
 tags:
   - go
+aliases:
+  - /2024/optimizing-libjson
 ---
 
 Libjson is a JSON parsing/interaction library for which I attempted to go the
