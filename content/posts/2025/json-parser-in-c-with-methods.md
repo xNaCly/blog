@@ -25,12 +25,12 @@ tags:
 int main(void) {
   struct json json = json_new(JSON({
     "object" : {},
-    "array" : [ [], {}],
-    "atoms" : [ "string", 0.1, true, false, null ],
+    "array" : [[]],
+    "atoms" : [ "string", 0.1, true, false, null ]
   }));
   struct json_value json_value = json.parse(&json);
-  // json_type_map returns the json_type as char*
-  printf("type: %s\n", json_type_map[json_value.type]);
+  json_print_value(&json_value);
+  puts("");
   json_free_value(&json_value);
   return EXIT_SUCCESS;
 }
@@ -223,7 +223,6 @@ struct json_value {
   } value;
   struct json_value *values;
   char **object_keys;
-  // length is filled for json_type=json_array|json_object
   size_t length;
 };
 ```
@@ -242,13 +241,25 @@ void json_free_value(struct json_value *json_value) {
     break;
   case json_object:
     for (size_t i = 0; i < json_value->length; i++) {
-      free(&json_value->object_keys[i]);
+      free(json_value->object_keys[i]);
       json_free_value(&json_value->values[i]);
+    }
+    if (json_value->object_keys != NULL) {
+      free(json_value->object_keys);
+      json_value->object_keys = NULL;
+    }
+    if (json_value->values != NULL) {
+      free(json_value->values);
+      json_value->values = NULL;
     }
     break;
   case json_array:
     for (size_t i = 0; i < json_value->length; i++) {
       json_free_value(&json_value->values[i]);
+    }
+    if (json_value->values != NULL) {
+      free(json_value->values);
+      json_value->values = NULL;
     }
     break;
   case json_number:
@@ -259,6 +270,7 @@ void json_free_value(struct json_value *json_value) {
   }
   json_value->type = json_null;
 }
+
 ```
 
 As simple as that, we ignore stack allocated json value variants, such as
@@ -342,7 +354,7 @@ int main(void) {
               (struct json_value){.type = json_null},
           },
   };
-  print_json_value(&json_value);
+  json_print_value(&json_value);
   puts("");
   return EXIT_SUCCESS;
 }
@@ -364,6 +376,7 @@ function to it and you got a method, as you would in Go or Rust.
 struct json {
   char *input;
   size_t pos;
+  size_t length;
   char (*cur)(struct json *json);
   bool (*is_eof)(struct json *json);
   void (*advance)(struct json *json);
@@ -383,6 +396,7 @@ struct json json_new(char *input) {
   ASSERT(input != NULL, "corrupted input");
   struct json j = (struct json){
       .input = input,
+      .length = strlen(input) - 1,
   };
 
   j.cur = cur;
@@ -402,21 +416,20 @@ struct json json_new(char *input) {
 ```c
 static char cur(struct json *json) {
   ASSERT(json != NULL, "corrupted internal state");
-  char cc = json->input[json->pos];
-  return cc ? cc : -1;
+  return json->is_eof(json) ? -1 : json->input[json->pos];
 }
 
 static bool is_eof(struct json *json) {
   ASSERT(json != NULL, "corrupted internal state");
-  return json->input[json->pos] == 0;
+  return json->pos > json->length;
 }
 
 static void advance(struct json *json) {
   ASSERT(json != NULL, "corrupted internal state");
-  if (!json->is_eof(json)) {
-    json->pos++;
-  }
+  json->pos++;
+  skip_whitespace(json);
 }
+
 ```
 
 `ASSERT` is a simple assertion macro:
@@ -449,22 +462,220 @@ jsoninc: ASSERT(input != NULL): `corrupted input` failed at ./json.c, line 16
 
 ## Parsing JSON with methods
 
+Since we now have the whole setup out of the way, we can start with the crux of
+the project: parsing json. Normally I would have done a lexer and parser, but
+for the sake of simplicity - I combined these passes into a single parser
+architecture.
+
+{{<callout type="Warning">}}
+Also please dont even think about standard complicance - I really cant be bothered, see [Parsing JSON is a
+Minefield 💣](https://seriot.ch/projects/parsing_json.html).
+{{</callout>}}
+
 ### Ignoring Whitespace
 
-### Parsing Arrays
+As far as we are concerned, JSON does not say anything about whitespace - so we
+just use the `skip_whitespace` function to ignore all and any whitespace:
 
-### Parsing Objects
+```c
+static void skip_whitespace(struct json *json) {
+  while (!json->is_eof(json) &&
+         (json->cur(json) == ' ' || json->cur(json) == '\t' ||
+          json->cur(json) == '\n')) {
+    json->pos++;
+  }
+}
+```
 
 ### Parsing Atoms
 
+Since JSON has five kinds of an atom, we need to parse them into our
+`json_value` struct using the `json->atom` method:
+
+```c
+static struct json_value atom(struct json *json) {
+    ASSERT(json != NULL, "corrupted internal state");
+
+    skip_whitespace(json);
+
+    char cc = json->cur(json);
+    if ((cc >= '0' && cc <= '9') || cc == '.' || cc == '-') {
+        return number(json);
+    }
+
+    switch (cc) {
+        // ... all of the atoms ...
+    default:
+        printf("unknown character '%c' at pos %zu\n", json->cur(json), json->pos);
+        ASSERT(false, "unknown character");
+        return (struct json_value){.type = json_null};
+    }
+}
+```
+
 #### numbers
 
-#### null
+{{<callout type="Info">}}
+Technically numbers in json should include scientific notation and other fun
+stuff, but lets just remember the projects simplicity and my sanity, see
+[json.org](www.json.org/).
+{{</callout>}}
 
-#### true
+```c
+static struct json_value number(struct json *json) {
+  ASSERT(json != NULL, "corrupted internal state");
+  size_t start = json->pos;
+  // i dont give a fuck about scientific notation <3
+  for (char cc = json->cur(json);
+       ((cc >= '0' && cc <= '9') || cc == '_' || cc == '.' || cc == '-');
+       json->advance(json), cc = json->cur(json))
+    ;
 
-#### false
+  char *slice = malloc(sizeof(char) * json->pos - start + 1);
+  ASSERT(slice != NULL, "failed to allocate slice for number parsing")
+  memcpy(slice, json->input + start, json->pos - start);
+  slice[json->pos - start] = 0;
+  double number = strtod(slice, NULL);
+  free(slice);
+
+  return (struct json_value){.type = json_number, .value = {.number = number}};
+}
+```
+
+We keep track of the start of the number, advance as far as the number is still
+considered a number (any of `0-9 | _ | . | -`). Once we hit the end we allocate
+a temporary string, copy the chars containing the number from the input string
+and terminate the string with `\0`. `strtod` is used to convert this string to
+a double. Once that is done we free the slice and return the result as a
+`json_value`.
+
+#### null, true and false
+
+`null`, `true` and `false` are unique atoms and easy to reason about, regarding
+constant size and characters, as such we can just assert their characters:
+
+```c
+static struct json_value atom(struct json *json) {
+  ASSERT(json != NULL, "corrupted internal state");
+
+  skip_whitespace(json);
+
+  char cc = json->cur(json);
+  if ((cc >= '0' && cc <= '9') || cc == '.' || cc == '-') {
+    return number(json);
+  }
+
+  switch (cc) {
+  case 'n': // null
+    json->pos++;
+    ASSERT(json->cur(json) == 'u', "unknown atom 'n', wanted 'null'")
+    json->pos++;
+    ASSERT(json->cur(json) == 'l', "unknown atom 'nu', wanted 'null'")
+    json->pos++;
+    ASSERT(json->cur(json) == 'l', "unknown atom 'nul', wanted 'null'")
+    json->advance(json);
+    return (struct json_value){.type = json_null};
+  case 't': // true
+    json->pos++;
+    ASSERT(json->cur(json) == 'r', "unknown atom 't', wanted 'true'")
+    json->pos++;
+    ASSERT(json->cur(json) == 'u', "unknown atom 'tr', wanted 'true'")
+    json->pos++;
+    ASSERT(json->cur(json) == 'e', "unknown atom 'tru', wanted 'true'")
+    json->advance(json);
+    return (struct json_value){.type = json_boolean,
+                               .value = {.boolean = true}};
+  case 'f': // false
+    json->pos++;
+    ASSERT(json->cur(json) == 'a', "invalid atom 'f', wanted 'false'")
+    json->pos++;
+    ASSERT(json->cur(json) == 'l', "invalid atom 'fa', wanted 'false'")
+    json->pos++;
+    ASSERT(json->cur(json) == 's', "invalid atom 'fal', wanted 'false'")
+    json->pos++;
+    ASSERT(json->cur(json) == 'e', "invalid atom 'fals', wanted 'false'")
+    json->advance(json);
+    return (struct json_value){.type = json_boolean,
+                               .value = {.boolean = false}};
+  // ... strings ...
+  default:
+    printf("unknown character '%c' at pos %zu\n", json->cur(json), json->pos);
+    ASSERT(false, "unknown character");
+    return (struct json_value){.type = json_null};
+  }
+}
+```
 
 #### strings
+
+{{<callout type="Info">}}
+Again, json strings should include escapes for quotation marks and other fun
+stuff, but lets again just remember the projects simplicity and my sanity, see
+[json.org](www.json.org/).
+{{</callout>}}
+
+```c
+static char *string(struct json *json) {
+  json->advance(json);
+  size_t start = json->pos;
+  for (char cc = json->cur(json); cc != '\n' && cc != '"';
+       json->advance(json), cc = json->cur(json))
+    ;
+
+  char *slice = malloc(sizeof(char) * json->pos - start + 1);
+  ASSERT(slice != NULL, "failed to allocate slice for a string")
+
+  memcpy(slice, json->input + start, json->pos - start);
+  slice[json->pos - start] = 0;
+
+  ASSERT(json->cur(json) == '"', "unterminated string");
+  json->advance(json);
+  return slice;
+}
+```
+
+Pretty easy stuff, as long as we are inside of the string (before `\"`,`\n` and
+`EOF`) we advance, after that we copy it into a new slice and return that slice
+(this function is especially useful for object keys - thats why it is a
+function).
+
+### Parsing Arrays
+
+Since arrays a any amount of json values between `[]` and separated via `,` -
+this one is not that hard to implement too:
+
+```c
+struct json_value array(struct json *json) {
+  ASSERT(json != NULL, "corrupted internal state");
+  ASSERT(json->cur(json) == '[', "invalid array start");
+  json->advance(json);
+
+  struct json_value json_value = {.type = json_array};
+  json_value.values = malloc(sizeof(struct json_value));
+
+  while (!json->is_eof(json) && json->cur(json) != ']') {
+    if (json_value.length > 0) {
+      if (json->cur(json) != ',') {
+        json_free_value(&json_value);
+      }
+      ASSERT(json->cur(json) == ',',
+             "expected , as the separator between array members");
+      json->advance(json);
+    }
+    struct json_value member = json->parse(json);
+    json_value.values = realloc(json_value.values,
+                                sizeof(json_value) * (json_value.length + 1));
+    json_value.values[json_value.length++] = member;
+  }
+
+  ASSERT(json->cur(json) == ']', "missing array end");
+  json->advance(json);
+  return json_value;
+}
+```
+
+We start with a array lenght of 1 
+
+### Parsing Objects
 
 ## Accessing values
