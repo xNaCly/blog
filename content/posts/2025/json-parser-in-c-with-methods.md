@@ -2,7 +2,6 @@
 title: "Abusing C to implement JSON Parsing with Struct Methods"
 summary: "Json parsing in C using function pointers attached to a struct"
 date: 2025-02-26
-draft: true
 tags:
   - json
   - c
@@ -38,7 +37,7 @@ int main(void) {
 
 {{<callout type="Tip - Compiling C projects the easy way">}}
 
-> Dont take this as a guide for using make, in my projects I just use it as a
+> Don't take this as a guide for using make, in my projects I just use it as a
 > command runner.
 
 #### Compiler flags
@@ -107,7 +106,8 @@ shell find . -name "*.c"
 
 #### Make and Makefiles
 
-> I dont define the `build` target as `.PHONY` because i generally never have a `build` dir.
+> I don't define the `build` target as `.PHONY` because i generally never have
+> a `build` directory.
 
 Putting it all together as a makefile:
 
@@ -145,7 +145,7 @@ build:
 
 ## Variadic macros to write inline raw JSON
 
-This doesnt really deserve its own section, but I use `#<expression>` to
+This doesn't really deserve its own section, but I use `#<expression>` to
 stringify C expressions in conjunction with `__VA_ARGS__`:
 
 ```c
@@ -166,7 +166,7 @@ char *raw_json = "{ \"array\" : [[]], }";
 
 ## Representing JSON values in memory
 
-I need a structure to hold a parsed json value, their types and their values.
+I need a structure to hold a parsed JSON value, their types and their values.
 
 ### Types of JSON values
 
@@ -273,7 +273,7 @@ void json_free_value(struct json_value *json_value) {
 
 ```
 
-As simple as that, we ignore stack allocated json value variants, such as
+As simple as that, we ignore stack allocated JSON value variants, such as
 `json_number`, `json_boolean` and `json_null`, while freeing allocated memory
 space for `json_string`, each `json_array` child and `json_object` keys and
 values.
@@ -463,12 +463,13 @@ jsoninc: ASSERT(input != NULL): `corrupted input` failed at ./json.c, line 16
 ## Parsing JSON with methods
 
 Since we now have the whole setup out of the way, we can start with the crux of
-the project: parsing json. Normally I would have done a lexer and parser, but
+the project: parsing JSON. Normally I would have done a lexer and parser, but
 for the sake of simplicity - I combined these passes into a single parser
 architecture.
 
 {{<callout type="Warning">}}
-Also please dont even think about standard complicance - I really cant be bothered, see [Parsing JSON is a
+Also please don't even think about standard compliance - I really cant be
+bothered, see [Parsing JSON is a
 Minefield 💣](https://seriot.ch/projects/parsing_json.html).
 {{</callout>}}
 
@@ -516,7 +517,7 @@ static struct json_value atom(struct json *json) {
 #### numbers
 
 {{<callout type="Info">}}
-Technically numbers in json should include scientific notation and other fun
+Technically numbers in JSON should include scientific notation and other fun
 stuff, but lets just remember the projects simplicity and my sanity, see
 [json.org](www.json.org/).
 {{</callout>}}
@@ -525,7 +526,7 @@ stuff, but lets just remember the projects simplicity and my sanity, see
 static struct json_value number(struct json *json) {
   ASSERT(json != NULL, "corrupted internal state");
   size_t start = json->pos;
-  // i dont give a fuck about scientific notation <3
+  // i don't give a fuck about scientific notation <3
   for (char cc = json->cur(json);
        ((cc >= '0' && cc <= '9') || cc == '_' || cc == '.' || cc == '-');
        json->advance(json), cc = json->cur(json))
@@ -609,9 +610,9 @@ static struct json_value atom(struct json *json) {
 #### strings
 
 {{<callout type="Info">}}
-Again, json strings should include escapes for quotation marks and other fun
-stuff, but lets again just remember the projects simplicity and my sanity, see
-[json.org](www.json.org/).
+Again, similarly to JSON numbers, JSON strings should include escapes for
+quotation marks and other fun stuff, but lets again just remember the projects
+simplicity and my sanity, see [json.org](www.json.org/).
 {{</callout>}}
 
 ```c
@@ -636,12 +637,12 @@ static char *string(struct json *json) {
 
 Pretty easy stuff, as long as we are inside of the string (before `\"`,`\n` and
 `EOF`) we advance, after that we copy it into a new slice and return that slice
-(this function is especially useful for object keys - thats why it is a
+(this function is especially useful for object keys - that's why it is a
 function).
 
 ### Parsing Arrays
 
-Since arrays a any amount of json values between `[]` and separated via `,` -
+Since arrays a any amount of JSON values between `[]` and separated via `,` -
 this one is not that hard to implement too:
 
 ```c
@@ -674,8 +675,55 @@ struct json_value array(struct json *json) {
 }
 ```
 
-We start with a array lenght of 1 
+We start with a array length of one and reallocate for every new child we find.
+We also check for the `,` between each child.
+
+> A growing array would probably be better to minimize allocations, but here we
+> are, writing unoptimized C code - still, it works :)
 
 ### Parsing Objects
 
-## Accessing values
+```c
+struct json_value object(struct json *json) {
+  ASSERT(json != NULL, "corrupted internal state");
+  ASSERT(json->cur(json) == '{', "invalid object start");
+  json->advance(json);
+
+  struct json_value json_value = {.type = json_object};
+  json_value.object_keys = malloc(sizeof(char *));
+  json_value.values = malloc(sizeof(struct json_value));
+
+  while (!json->is_eof(json) && json->cur(json) != '}') {
+    if (json_value.length > 0) {
+      if (json->cur(json) != ',') {
+        json_free_value(&json_value);
+      }
+      ASSERT(json->cur(json) == ',',
+             "expected , as separator between object key value pairs");
+      json->advance(json);
+    }
+    ASSERT(json->cur(json) == '"',
+           "expected a string as the object key, did not get that")
+    char *key = string(json);
+    ASSERT(json->cur(json) == ':', "expected object key and value separator");
+    json->advance(json);
+
+    struct json_value member = json->parse(json);
+    json_value.values = realloc(json_value.values, sizeof(struct json_value) *
+                                                       (json_value.length + 1));
+    json_value.values[json_value.length] = member;
+    json_value.object_keys = realloc(json_value.object_keys,
+                                     sizeof(char **) * (json_value.length + 1));
+    json_value.object_keys[json_value.length] = key;
+    json_value.length++;
+  }
+
+  ASSERT(json->cur(json) == '}', "missing object end");
+  json->advance(json);
+  return json_value;
+}
+```
+
+Same as arrays, only instead of a single atom we have a string as the key, `:`
+as a separator and a `json_value` as the value. Each pair is separated with
+`,`.
