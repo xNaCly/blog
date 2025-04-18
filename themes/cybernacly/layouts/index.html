@@ -1,9 +1,8 @@
 {{ define "main" }}
-    <div class="centered home">
-    {{ $pages := .Site.RegularPages }} 
-    {{ $paginator := .Paginate ($pages) }} 
-    {{ range $paginator.Pages }} 
-        {{ $title := .Title }} 
+<div class="centered home">
+    {{ $paginator := .Paginate site.RegularPages }}
+    {{ range $paginator.Pages }}
+        {{ $title := .Title }}
         {{ $summary := .Summary }}
         <section class="article">
             <div class="heading">
@@ -23,7 +22,7 @@
                 <a href="{{.Paginator.Prev.URL}}">
                     Newer {{ with .Site.Params.newerPosts }}{{ . }}{{ end }}
                 </a>
-            {{ end }} 
+            {{ end }}
             {{ if $paginator.HasNext }}
                 <a class="older" href="{{.Paginator.Next.URL}}">{{ with .Site.Params.olderPosts }}{{ . }}{{ end }}
                     Older
