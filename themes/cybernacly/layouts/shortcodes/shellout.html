@@ -1,0 +1,11 @@
+<!-- shellout renders first line as fish, and second line as `lang` -->
+{{ $body := printf "%s" .Inner }}
+{{ $lines := split $body "%SEPARATOR%\n" }}
+{{ $cmd := index $lines 0 | strings.TrimSpace }}
+{{ $out := delimit (after 1 $lines) "\n" }}
+
+<div class="codeblock">
+  <span class="codeblock-type">Terminal</span>
+</div>
+{{- highlight $cmd "fish" "lineNos=false" -}}
+{{- highlight $out (.Get "lang" | default "text") "lineNos=false" -}}
