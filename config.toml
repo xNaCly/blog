@@ -33,7 +33,7 @@ filename = 'sitemap.xml'
 priority = 0.5
 
 [params]
-bio = "Fullstack Developer and Tech enthusiast"
+bio = "Backend developer with an interest in pldev and performance"
 description = "A blog all around tech, programming and whatever im currently interested in"
 
     [params.author]

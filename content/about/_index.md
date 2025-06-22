@@ -1,8 +1,9 @@
-Hi, I'm Matteo, a 21 year old software engineer from Germany.
+Hi, I'm Matteo, a 22 year old software engineer from Germany.
 
-I am interested in programming, compilers, tech and hardware. In my free time I
-like to contribute to free and open source software, as well as writing my own
-quality of life improving projects.
+I am interested in compilers, tech and hardware. In my free time I like to
+contribute to free and open source software, as well as writing my own
+programming languages, benchmarking all over the place and writing stuff I
+forget to commit.
 
 {{<rawhtml>}}
 
