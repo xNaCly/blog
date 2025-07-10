@@ -1,12 +1,11 @@
 ---
 title: "Strategies for very fast Lexers"
-summary: ""
-date: 2025-07-03
+summary: "Making compilation pipelines fast, starting with the tokenizer"
+date: 2025-07-11
 draft: true
 tags:
-- C
+  - C
 ---
-
 
 {{<callout type="Warning">}}
 In this blog post I'll explain strategies I used to make the purple garden
@@ -32,25 +31,25 @@ As an overview:
 │       Lexer       │ <- we are here
 │                   │
 └─────────┬─────────┘
-          │          
+          │
           │ Tokens <- and here
-          │          
+          │
 ┌─────────▼─────────┐
 │                   │
 │       Parser      │
 │                   │
 └─────────┬─────────┘
-          │          
-          │ AST          
-          │          
+          │
+          │ AST
+          │
 ┌─────────▼─────────┐
 │                   │
 │      Compiler     │
 │                   │
 └─────────┬─────────┘
-          │          
-          │ Bytecode          
-          │          
+          │
+          │ Bytecode
+          │
 ┌─────────▼─────────┐
 │                   │
 │  Virtual Machine  │
@@ -62,39 +61,39 @@ For a list of characters, lets say `(@std.fmt.println "my pi is: " 3.1415)`:
 
 1. Input to the lexer:
 
-    ```text
-    (@std.fmt.println "my pi is: " 3.1415)
-    ```
+   ```text
+   (@std.fmt.println "my pi is: " 3.1415)
+   ```
 
 2. As characters:
 
-    ```text
-    (
-    @
-    s
-    t
-    d
-    .
-    f
-    m
-    t
-    // ....
-    )
-    ```
+   ```text
+   (
+   @
+   s
+   t
+   d
+   .
+   f
+   m
+   t
+   // ....
+   )
+   ```
 
 3. As pseudo tokens:
 
-    ```text
-    (
-    @std
-    .
-    fmt
-    .
-    println
-    "my pi is: "
-    3.1415
-    )
-    ```
+   ```text
+   (
+   @std
+   .
+   fmt
+   .
+   println
+   "my pi is: "
+   3.1415
+   )
+   ```
 
 The above is just an example and I'll go into detail below:
 
@@ -104,9 +103,9 @@ A token is not only a set characters it can be mapped to, but it also holds:
 
 - A token type, to easily distinguish between tokens
 - Positional information:
-    - start point
-    - end or length
-    - line number
+  - start point
+  - end or length
+  - line number
 
 Purple garden keeps it as minimal as possible and just has a String and a token type:
 
@@ -253,51 +252,51 @@ easiest way I could think of implementing this was to:
 
 1. Define a jump table mapping lexeme start characters to their respective blocks
 
-    ```c
-    static void *jump_table[256] = {
-      // first bind all possible bytes to the unkown label, so there are no out
-      // of bound reads
-      [0 ... 255] = &&unknown,
+   ```c
+   static void *jump_table[256] = {
+     // first bind all possible bytes to the unkown label, so there are no out
+     // of bound reads
+     [0 ... 255] = &&unknown,
 
-      // replace all known bytes with correct jump labels
-      ['('] = &&delimitor_left,
-      [')'] = &&delimitor_right,
-      ['['] = &&braket_left,
-      [']'] = &&braket_right,
-      ['@'] = &&builtin,
-      ['+'] = &&plus,
-      ['-'] = &&minus,
-      ['/'] = &&slash,
-      ['*'] = &&asterisks,
-      ['='] = &&equal,
-      [' '] = &&whitespace,
-      ['\t'] = &&whitespace,
-      ['\n'] = &&whitespace,
-      [';'] = &&comment,
-      ['.'] = &&number,
-      ['0' ... '9'] = &&number,
-      ['a' ... 'z'] = &&ident,
-      ['A' ... 'Z'] = &&ident,
-      ['\''] = &&quoted,
-      ['_'] = &&ident,
-      ['"'] = &&string,
+     // replace all known bytes with correct jump labels
+     ['('] = &&delimitor_left,
+     [')'] = &&delimitor_right,
+     ['['] = &&braket_left,
+     [']'] = &&braket_right,
+     ['@'] = &&builtin,
+     ['+'] = &&plus,
+     ['-'] = &&minus,
+     ['/'] = &&slash,
+     ['*'] = &&asterisks,
+     ['='] = &&equal,
+     [' '] = &&whitespace,
+     ['\t'] = &&whitespace,
+     ['\n'] = &&whitespace,
+     [';'] = &&comment,
+     ['.'] = &&number,
+     ['0' ... '9'] = &&number,
+     ['a' ... 'z'] = &&ident,
+     ['A' ... 'Z'] = &&ident,
+     ['\''] = &&quoted,
+     ['_'] = &&ident,
+     ['"'] = &&string,
 
-      // handle the edgecase of being at the end of the input
-      [0] = &&end,
-    };
-    ```
+     // handle the edgecase of being at the end of the input
+     [0] = &&end,
+   };
+   ```
 
 2. Create a macro for jumping to the label
 
-    ```c
-    #define JUMP_TARGET goto *jump_table[(int8_t)l->input.p[l->pos]]
-    ```
+   ```c
+   #define JUMP_TARGET goto *jump_table[(int8_t)l->input.p[l->pos]]
+   ```
 
 3. At the start of the lexer, call the macro
 
-    ```c
-    JUMP_TARGET
-    ```
+   ```c
+   JUMP_TARGET
+   ```
 
 Putting it all together lets us build the following threaded lexer:
 
@@ -388,7 +387,7 @@ comment:
 whitespace:
   JUMP_TARGET;
 
-unknown: 
+unknown:
   return 1;
 
 end:
@@ -402,13 +401,185 @@ significantly faster than the former due to:
 - Better [code density](https://en.wikipedia.org/wiki/Instruction_set_architecture#Code_density)
 - Less cache misses, better branch prediction
 
-
 {{<callout type="Warning">}}
 There are two downsides to this approach:
 
 1. It is not supported by MSVC toolchain (clang, gcc only)
 2. It makes reading and debugging the lexer far more complicated
-{{</callout>}}
+   {{</callout>}}
+
+
+## Abstracting allocations via the Allocator interface
+
+I want to allow the user of purple-garden to choose between allocation
+strategies like my garbage collectors and a bump allocator. For this I need an
+interface to marry several backing implementations into a singular api:
+
+```c
+#ifndef MEM_H
+#define MEM_H
+
+#include <stddef.h>
+
+#ifdef DEBUG
+#if DEBUG
+#define VERBOSE_ALLOCATOR 1
+#endif
+#else
+#define VERBOSE_ALLOCATOR 0
+#endif
+
+// 1MB
+#define GC_MIN_HEAP 1024 * 1024
+
+typedef struct {
+  size_t current;
+  size_t allocated;
+} Stats;
+
+// CALL is used to emulate method calls by calling a METHOD on SELF with
+// SELF->ctx and __VA_ARGS__, this is useful for interface interaction, such as
+// Allocator, which reduces alloc_bump.request(alloc_bump.ctx, 64); to
+// CALL(alloc_bump, request, 64), removing the need for passing the context in
+// manually
+#if VERBOSE_ALLOCATOR
+#include <stdio.h>
+#define CALL(SELF, METHOD, ...)                                                \
+  (fprintf(stderr, "[ALLOCATOR] %s@%s::%d: %s->%s(%s)\n", __FILE__, __func__,  \
+           __LINE__, #SELF, #METHOD, #__VA_ARGS__),                            \
+   (SELF)->METHOD((SELF)->ctx, ##__VA_ARGS__))
+#else
+#define CALL(SELF, METHOD, ...) (SELF)->METHOD((SELF)->ctx, ##__VA_ARGS__)
+#endif
+
+// Allocator defines an interface abstracting different allocators, so the
+// runtime of the virtual machine does not need to know about implementation
+// details, can be used like this:
+//
+//
+//  #define ALLOC_HEAP_SIZE = 1024
+//  Allocator alloc_bump = bump_init(ALLOC_HEAP_SIZE);
+//
+//  size_t some_block_size = 16;
+//  void *some_block = alloc_bump.request(alloc_bump.ctx, some_block_size);
+//
+//  alloc_bump.destroy(alloc_bump.ctx);
+//
+typedef struct {
+  // Allocator::ctx refers to an internal allocator state and owned memory
+  // areas, for instance, a bump allocator would attach its meta data (current
+  // position, cap, etc) here
+  void *ctx;
+
+  // Allocator::stats is expected to return the current statistics of the
+  // underlying allocator
+  Stats (*stats)(void *ctx);
+  // Allocator::request returns a handle to a block of memory of size `size`
+  void *(*request)(void *ctx, size_t size);
+  // Allocator::destroy cleans state up and deallocates any owned memory areas
+  void (*destroy)(void *ctx);
+} Allocator;
+
+Allocator *bump_init(size_t size);
+Allocator *xcgc_init(size_t size, void *vm);
+
+#endif
+```
+
+For instance: this allocator is then passed to the virtual machine. The vm uses
+`Allocator->request(Allocator->ctx, sizeof(Value))` to allocate a new runtime
+value.
+
+I included a `CALL` macro for cleaning this duplicated context passing up:
+
+```c
+Allocator *a = bump_init(1024);
+
+// before:
+void *block = a->request(a->ctx, 512);
+a->destroy(a->ctx)
+
+// after:
+void *block = CALL(a, request, 512);
+CALL(a, destroy)
+```
+
+This macro also enables verbose allocation insights for debugging purposes:
+
+```text
+[ALLOCATOR] vm.c@freelist_preallocate::59: fl->alloc->request(sizeof(Frame))
+[ALLOCATOR] main.c@main::245: vm.alloc->stats()
+[ALLOCATOR] main.c@main::255: pipeline_allocator->destroy()
+[ALLOCATOR] vm.c@Vm_destroy::283: vm->alloc->destroy()
+```
+
+The implementation of said interface is straightforward:
+
+```c
+// Bump allocator header
+typedef struct {
+  // points to the start of the allocated block from which Allocator::request
+  // will hand out aligned chunks
+  void *block;
+  // the size of said allocated block
+  size_t len;
+  // the current amount of bytes in use
+  size_t pos;
+} BumpCtx;
+
+void *bump_request(void *ctx, size_t size) {
+  BumpCtx *b_ctx = (BumpCtx *)ctx;
+  size_t align = sizeof(void *);
+  b_ctx->pos = (b_ctx->pos + align - 1) & ~(align - 1);
+  ASSERT(b_ctx->pos + size <= b_ctx->len, "OOM :( with %zu", b_ctx->len);
+  void *block_entry = (char *)b_ctx->block + b_ctx->pos;
+  b_ctx->pos += size;
+  return block_entry;
+}
+
+void bump_destroy(void *ctx) {
+  ASSERT(ctx != NULL, "bump_destroy on already destroyed allocator");
+  BumpCtx *b_ctx = (BumpCtx *)ctx;
+  // madvise(2):
+  // The  application  no  longer requires the pages in the range
+  // specified by addr and len. The kernel can thus  free  these
+  // pages,  but  the freeing could be delayed until memory pres‐
+  // sure occurs.
+  madvise(b_ctx->block, b_ctx->len, MADV_FREE);
+  int res = munmap(b_ctx->block, b_ctx->len);
+  ASSERT(res == 0, "munmap failed");
+  free(ctx);
+}
+
+Stats bump_stats(void *ctx) {
+  BumpCtx *b_ctx = (BumpCtx *)ctx;
+  return (Stats){.allocated = b_ctx->len, .current = b_ctx->pos};
+}
+
+Allocator *bump_init(size_t size) {
+  long page_size = sysconf(_SC_PAGESIZE);
+  size = (size + page_size - 1) & ~(page_size - 1);
+
+  void *b = mmap(NULL, size, PROT_READ | PROT_WRITE,
+                 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  ASSERT(b != MAP_FAILED, "failed to mmap allocator buffer");
+
+  BumpCtx *ctx = malloc(sizeof(BumpCtx));
+  ASSERT(ctx != NULL, "failed to bump allocator context");
+  ctx->len = size;
+  ctx->pos = 0;
+  ctx->block = b;
+
+  Allocator *a = malloc(sizeof(Allocator));
+  ASSERT(ctx != NULL, "failed to alloc bump allocator");
+  a->ctx = (void *)ctx;
+  a->destroy = bump_destroy;
+  a->request = bump_request;
+  a->stats = bump_stats;
+
+  return a;
+}
+```
 
 
 ## Operating on zero copy, zero alloc string windows
@@ -518,9 +689,10 @@ int64_t Str_to_int64_t(const Str *str) {
 }
 ```
 
-Doubles are represented differently. By their mantiassa and exponent, which
-requires a slightly more sophisticated conversion algorithm. In the same vain
-as `Str_to_int64_t`, validating 
+Doubles are represented differently, specifcally by their mantiassa and
+exponent, requiring a slightly more sophisticated conversion algorithm. In the
+same vain as `Str_to_int64_t`, validating is already done by the lexer to the
+extend of only allowing any of `.1234567890`.
 
 ```c
 double Str_to_double(const Str *str) {
@@ -568,14 +740,238 @@ double Str_to_double(const Str *str) {
 ```
 
 ## Hashing everything
-## Lazy conversions and number parsing
+
+I want to distinguish atoms (strings, numbers, idents) from other atoms for
+interning purposes and faster comparisons in the pipeline. This can be done via
+hashes, especially since we already "visit" each member of said atoms while
+converting them to tokens. Hashing them is therefore just a matter of
+computations while walking the atoms underlying bytes.
+
+For instance strings: before this, the lexer just advanced until it hit the closing delimitor or EOF:
+
+```c
+size_t Lexer_all(Lexer *l, Allocator *a, Token **out) {
+
+    // ...
+
+string: {
+  // skip "
+  l->pos++;
+  size_t start = l->pos;
+  for (char cc = cur(l); cc > 0 && cc != '"'; l->pos++, cc = cur(l)) {}
+
+  if (UNLIKELY(cur(l) != '"')) {
+    Str slice = Str_slice(&l->input, l->pos, l->input.len);
+    fprintf(stderr, "lex: Unterminated string near: '%.*s'", (int)slice.len,
+            slice.p);
+    out[count++] = INTERN_EOF;
+  } else {
+    Token *t = CALL(a, request, sizeof(Token));
+    t->type = T_STRING;
+    t->string = (Str){
+        .p = l->input.p + start,
+        .len = l->pos - start,
+    };
+    out[count++] = t;
+    // skip "
+    l->pos++;
+  }
+  JUMP_TARGET;
+}
+
+    // ...
+
+}
+```
+
+Adding hashing to this is fairly easy:
+
+```diff
+diff --git a/lexer.c b/lexer.c
+index 316a494..2280a6b 100644
+--- a/lexer.c
++++ b/lexer.c
+@@ -286,10 +286,7 @@ string: {
+   // skip "
+   l->pos++;
+   size_t start = l->pos;
++  size_t hash = FNV_OFFSET_BASIS;
+   for (char cc = cur(l); cc > 0 && cc != '"'; l->pos++, cc = cur(l)) {
++    hash ^= cc;
++    hash *= FNV_PRIME;
+   }
+
+   if (UNLIKELY(cur(l) != '"')) {
+@@ -303,7 +300,6 @@ string: {
+     t->string = (Str){
+         .p = l->input.p + start,
+         .len = l->pos - start,
++        .hash = hash,
+     };
+     out[count++] = t;
+     // skip "
+```
+
+Numbers, identifiers and builtins are all also being hashed, I omitted this
+here for clearity and since we will revisit this topic again in this article. 
+
 ## Interning Tokens
-## Prehashing keywords for comparisons 
-## Abstracting allocations via the Allocator interface
+
+Most of the tokens we will encounter are constant, we know:
+
+- their size
+- their type
+
+We can use this knowledge, statically allocate these and use their pointers to
+reduce memory pressure:
+
+```c
+// we can "intern" these, since all of them are the same, regardless of position
+Token *INTERN_DELIMITOR_LEFT = &SINGLE_TOK(T_DELIMITOR_LEFT);
+Token *INTERN_DELIMITOR_RIGHT = &SINGLE_TOK(T_DELIMITOR_RIGHT);
+Token *INTERN_BRAKET_LEFT = &SINGLE_TOK(T_BRAKET_LEFT);
+Token *INTERN_BRAKET_RIGHT = &SINGLE_TOK(T_BRAKET_RIGHT);
+Token *INTERN_MINUS = &SINGLE_TOK(T_MINUS);
+Token *INTERN_PLUS = &SINGLE_TOK(T_PLUS);
+Token *INTERN_ASTERISKS = &SINGLE_TOK(T_ASTERISKS);
+Token *INTERN_SLASH = &SINGLE_TOK(T_SLASH);
+Token *INTERN_FALSE = &SINGLE_TOK(T_FALSE);
+Token *INTERN_TRUE = &SINGLE_TOK(T_TRUE);
+Token *INTERN_EQUAL = &SINGLE_TOK(T_EQUAL);
+Token *INTERN_EOF = &SINGLE_TOK(T_EOF);
+
+// size_t Lexer_all(Lexer *l, Allocator *a, Token **out) 
+```
+
+`SINGLE_TOK` is just: 
+
+```c
+#define SINGLE_TOK(t) ((Token){.type = t})
+```
+
+## Prehashing keywords for comparisons
+
+As introduced in the previous chapters, all identifers are hashed, thus we can
+also hash the known keywords at startup and make comparing them very fast.
+
+Lets take a look at `true` and `false`, both are known keywords and we will
+need to compare found identifers to them. 
+
+```c {hl_lines=[12]}
+ident: {
+  size_t start = l->pos;
+  size_t hash = FNV_OFFSET_BASIS;
+  for (char cc = cur(l); cc > 0 && is_alphanum(cc); l->pos++, cc = cur(l)) {
+    hash ^= cc;
+    hash *= FNV_PRIME;
+  }
+
+  size_t len = l->pos - start;
+  Token *t;
+
+  // comparing to the keywords is now just a number comparison
+  if (hash == true_hash) {
+    t = INTERN_TRUE;
+  } else if (hash == false_hash) {
+    t = INTERN_FALSE;
+  } else {
+    t = CALL(a, request, sizeof(Token));
+    t->type = T_IDENT;
+    t->string = (Str){
+        .p = l->input.p + start,
+        .len = len,
+        .hash = hash,
+    };
+  }
+  out[count++] = t;
+  JUMP_TARGET;
+}
+```
+
+{{<callout type="Tip - is_alphanum deep dive">}}
+
+> I know this function shouldn't be called `is_alphanum` because it allows `[A-Za-z0-9_-]`
+
+A naive check of `is_alphanum` can be:
+
+```c
+bool is_alphanum(char cc) {
+    return (cc >= 'a' && cc <= 'z') || (cc >= 'A' && cc <= 'Z') 
+        || (cc >= '0' && cc <= '9') || cc == '_' || cc == '-'
+}
+```
+
+We know we can omit the uppercase check by converting the character to its
+lowercase representation, so lets fold the character, since ASCII upper and
+lowercase characters only differ by a single bit: 
+
+```c
+bool is_alphanum(char cc) {
+  uint8_t lower = cc | 0x20;
+  bool is_alpha = (lower >= 'a' && lower <= 'z');
+  bool is_digit = (cc >= '0' && cc <= '9');
+  return is_alpha || is_digit || cc == '_' || cc == '-';
+}
+```
+
+In benchmarks I was able to measure `inline` and parameter type `uint8_t` have a
+reproducible impact of reducing the runtime by 1-5% for identifier heavy
+inputs, so I marked the function as "private" `static inline`:
+
+```c
+inline static bool is_alphanum(uint8_t cc) {
+  uint8_t lower = cc | 0x20;
+  bool is_alpha = (lower >= 'a' && lower <= 'z');
+  bool is_digit = (cc >= '0' && cc <= '9');
+  return is_alpha || is_digit || cc == '_' || cc == '-';
+}
+```
+
+There are some other ways that could be more efficient, but I haven't benchmarked them:
+
+1. statically allocated lookup table like:
+
+    ```c
+    static const bool is_alphanum_lookup[128] = {
+        ['0' ... '9'] = true,
+        ['A' ... 'Z'] = true,
+        ['a' ... 'z'] = true,
+        ['_'] = true,
+        ['-'] = true,
+    };
+    inline static bool is_alphanum(uint8_t cc) {
+        return cc < 128 && is_alphanum_lookup[cc];
+    }
+    ```
+
+
+2. weird bit sets:
+
+    > I don't fully understand this one and it sucks to read, so no thanks
+
+    ```c
+    static const uint64_t table1 = 0x03ff000000000000
+    static const uint64_t table2 = 0x07fffffe07fffffe
+
+
+    inline static bool is_alphanum(uint8_t cc) {
+        if (cc >= 128) return false;
+        return cc < 64 ? (table1 >> cc) & 1 : (table2 >> (cc - 64)) & 1;
+    }
+    ```
+
+{{</callout>}}
+
+## Lazy conversions and number parsing
+
 ## Extra: memory mapping the input
 
 # Combining select strategies with later compiliation pipeline stages
+
 ## With the parser
+
 ## With the compiler
+
+## Putting it all together
 
 # Micro and Macrobenchmarks
