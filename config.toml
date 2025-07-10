@@ -9,7 +9,7 @@ pagination.pagerSize = 4
 [markup]
 
     [markup.highlight]
-    style = 'base16-snazzy'
+    style = 'github-dark'
     lineNos = true
     lineNumbersInTable = false
 
