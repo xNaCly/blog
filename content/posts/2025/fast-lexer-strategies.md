@@ -888,7 +888,7 @@ ident: {
 }
 ```
 
-{{<callout type="Tip - is_alphanum deep dive">}}
+{{<callout type="Tip - is_alphanum performance deep dive">}}
 
 > I know this function shouldn't be called `is_alphanum` because it allows `[A-Za-z0-9_-]`
 
@@ -927,7 +927,7 @@ inline static bool is_alphanum(uint8_t cc) {
 }
 ```
 
-There are some other ways that could be more efficient, but I haven't benchmarked them:
+There are some other ways that could be more efficient, but I haven't benchmarked these:
 
 1. statically allocated lookup table like:
 
@@ -953,7 +953,6 @@ There are some other ways that could be more efficient, but I haven't benchmarke
     static const uint64_t table1 = 0x03ff000000000000
     static const uint64_t table2 = 0x07fffffe07fffffe
 
-
     inline static bool is_alphanum(uint8_t cc) {
         if (cc >= 128) return false;
         return cc < 64 ? (table1 >> cc) & 1 : (table2 >> (cc - 64)) & 1;
@@ -962,11 +961,66 @@ There are some other ways that could be more efficient, but I haven't benchmarke
 
 {{</callout>}}
 
-## Lazy conversions and number parsing
+## On demand double and int64_t parsing
+
+Let's revisit hashing numbers: as introduced before, all atoms are hashed,
+therefore I am able to use this hash for and while interning. This way the
+compiler converts all duplicated integers and doubles into their numerical
+representation only once (in the compiler). 
+
+The lexer therefore only needs to store the window of the atoms input.
+While verifying the input to `Str_to_double` and `Str_to_int64_t` are
+valid.
+
+```c
+number: {
+  size_t start = l->pos;
+  size_t i = start;
+  bool is_double = false;
+  size_t hash = FNV_OFFSET_BASIS;
+  for (; i < l->input.len; i++) {
+    char cc = l->input.p[i];
+    hash ^= cc;
+    hash *= FNV_PRIME;
+    if (cc >= '0' && cc <= '9')
+      continue;
+    if (cc == '.') {
+      ASSERT(!is_double, "Two dots in double");
+      is_double = true;
+      continue;
+    }
+    break;
+  }
+
+  l->pos = i;
+  Token *n = CALL(a, request, sizeof(Token));
+  n->string = (Str){
+      .p = l->input.p + start,
+      .len = i - start,
+      .hash = hash,
+  };
+  if (is_double) {
+    n->type = T_DOUBLE;
+  } else {
+    n->type = T_INTEGER;
+  }
+
+  out[count++] = n;
+  JUMP_TARGET;
+}
+```
+
+{{<callout type="Tip - Distinguishing between integers and doubles">}}
+At first purple garden represented all numbers as doubles internally, only
+after benchmarking, I found out that integer math is a lot faster, so it
+makes a lot more sense to store all non floating point numbers as
+integers.
+{{</callout>}}
+
 
 ## Extra: memory mapping the input
 
-# Combining select strategies with later compiliation pipeline stages
+# Combining select strategies with later compilation pipeline stages
 
 ## With the parser
 
@@ -974,4 +1028,4 @@ There are some other ways that could be more efficient, but I haven't benchmarke
 
 ## Putting it all together
 
-# Micro and Macrobenchmarks
+# Micro and Macro benchmarks
