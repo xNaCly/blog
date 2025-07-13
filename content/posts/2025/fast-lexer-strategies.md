@@ -3,20 +3,30 @@ title: "Strategies for very fast Lexers"
 summary: "Making compilation pipelines fast, starting with the tokenizer"
 date: 2025-07-11
 draft: true
+math: true
 tags:
   - C
   - pldev
 ---
 
-{{<callout type="Warning">}}
 In this blog post I'll explain strategies I used to make the purple garden
-lexer really fast, that doesnt mean all approaches are feasible for your
-usecase and architecture.
+lexer really fast. 
+
+> Purple garden is an s-expr based language I am currently developing for
+> myself. Its my attempt at building a language I like, with a battery included
+> approach, while designing it with performance in mind.
+
+This doesn't mean all approaches are feasible for your use case, architecture
+and design. I tried to bring receipts for my performance claims, so
+watch out for these blocks at the end of chapters:
+
+{{<callout type="Info - Benchmark">}}
 {{</callout>}}
+
 
 # Introduction to Lexing
 
-A lexer (often also a tokenizer) is the easiest part of any compilation and
+A lexer (often also referred to as a tokeniser) is the easiest part of any compilation and
 language pipeline. The idea is to convert a list of characters into a list of
 tokens in which each token conveys some meaning. This list of tokens can then
 be used by the parser to generate an abstract syntax tree (AST), which the
@@ -98,7 +108,7 @@ For a list of characters, lets say `(@std.fmt.println "my pi is: " 3.1415)`:
 
 The above is just an example and I'll go into detail below:
 
-## Defining Tokens
+## Defining purple garden's Tokens
 
 A token is not only a set characters it can be mapped to, but it also holds:
 
@@ -581,6 +591,94 @@ Allocator *bump_init(size_t size) {
 }
 ```
 
+
+{{<callout type="Info - Benchmarks">}}
+
+This reduced the total runtime by like 24ms or made it 1.58x faster, see
+[`4251b6b`](https://github.com/xNaCly/purple-garden/commit/4251b6b9fd701d7e1f7fd9a6e783000aa465f8ff).
+
+_The separate parsing stage was due to me experimenting with attaching the
+parser to the compiler, but this made the whole thing a bit slower than just
+finishing parsing before compiling_
+
+```text
+mem+main+cc: replace dynamic alloc with bump allocator (~1.6x faster)
+- preallocated 4MB for bytecode and 256KB for the global pool to improve memory management.
+- cc now takes an allocator to omit inline memory allocations for global
+  pool entries and bytecode creation
+- with previous changes shaving off 24ms
+
+Old perf (before b59737a)
+
+    [    0.0070ms] main::Args_parse: Parsed arguments
+    [    0.0080ms] io::IO_read_file_to_string: mmaped input
+    [   41.2460ms] parser::Parser_run: Transformed source to AST
+    [   20.7330ms] cc::cc: Flattened AST to byte code
+    [    0.9640ms] mem::Allocator::destroy: Deallocated AST memory space
+    [    2.1270ms] vm::Vm_run: Walked and executed byte code
+    [    0.5560ms] vm::Vm_destroy: Deallocated global pool and bytecode list
+
+New:
+
+    [    0.0050ms] main::Args_parse: Parsed arguments
+    [    0.0120ms] io::IO_read_file_to_string: mmaped input
+    [   37.8600ms] cc::cc: Flattened AST to byte code
+    [    2.3540ms] vm::Vm_run: Walked and executed byte code
+    [    0.7380ms] mem::Allocator::destroy: Deallocated AST memory space
+
+    $ hyperfine "./purple_garden examples/bench.garden" "../purple_garden_old/purple_garden examples/bench.garden"
+    Benchmark 1: ./purple_garden examples/bench.garden
+      Time (mean ± σ):      42.2 ms ±   0.7 ms    [User: 28.0 ms, System: 13.8 ms]
+      Range (min … max):    41.3 ms …  45.8 ms    70 runs
+
+    Benchmark 2: ../purple_garden_old/purple_garden examples/bench.garden
+      Time (mean ± σ):      66.6 ms ±   1.1 ms    [User: 45.9 ms, System: 20.2 ms]
+      Range (min … max):    64.8 ms …  69.8 ms    43 runs
+
+    Summary
+      ./purple_garden examples/bench.garden ran
+        1.58 ± 0.04 times faster than ../purple_garden_old/purple_garden examples/bench.garden
+```
+
+Before I also made the parser use the block allocator, see
+[`0324051`](https://github.com/xNaCly/purple-garden/commit/032405134150b4fb6669812320089f1851c3cb8b):
+
+```text
+parser: allocate with bump alloc (2x faster parse, 26x faster clean)
+I replaced the inline allocation logic for the growing of Node.children with
+the bump allocator from the allocator abstraction in mem::Allocator
+(mem::bump_*). This results in 2x faster parsing and 27x faster AST cleanup:
+
+- [   89.4830ms/41.7840ms=02.1417x faster] parser::Parser_run: Transformed
+  source to AST
+- [   22.3900ms/00.8440ms=26.5284x faster] parser::Node_destroy: Deallocated
+  AST Nodes renamed to mem::Allocator::destroy
+
+Old:
+
+    $ make bench PG=examples/bench.garden
+    [    0.0050ms] main::Args_parse: Parsed arguments
+    [    0.0110ms] io::IO_read_file_to_string: mmaped input
+    [   89.4830ms] parser::Parser_run: Transformed source to AST
+    [   18.8010ms] cc::cc: Flattened AST to byte code
+    [   22.3900ms] parser::Node_destroy: Deallocated AST Nodes
+    [    2.3200ms] vm::Vm_run: Walked and executed byte code
+    [    0.4670ms] vm::Vm_destroy: Deallocated global pool and bytecode list
+
+New:
+
+    $ make bench PG=examples/bench.garden
+    [    0.0050ms] main::Args_parse: Parsed arguments
+    [    0.0100ms] io::IO_read_file_to_string: mmaped input
+    [   41.7840ms] parser::Parser_run: Transformed source to AST
+    [   21.2160ms] cc::cc: Flattened AST to byte code
+    [    0.8440ms] mem::Allocator::destroy: Deallocated AST memory space
+    [    2.2510ms] vm::Vm_run: Walked and executed byte code
+    [    0.7590ms] vm::Vm_destroy: Deallocated global pool and bytecode list
+```
+
+{{</callout>}}
+
 ## Operating on zero copy, zero alloc string windows
 
 Our lexer doesn't require mutable strings, C does not come with a string
@@ -737,6 +835,53 @@ double Str_to_double(const Str *str) {
   return result;
 }
 ```
+
+{{<callout type="Info - Benchmarks">}}
+1.4x Speedup by using the above abstraction in a non allocating way, see
+[`b19088a`](https://github.com/xNaCly/purple-garden/commit/b19088a61ec5f5e723036fe8cd1161c3a1fecc44):
+
+```text
+common: make String methods 0 alloc (~1.4x faster)
+- String_slice no longer requires a malloc, now just returns a window into its
+  argument
+- String_to no longer returns just the underlying pointer (String.p) but
+  allocates a new char*
+- new String_debug method to print the window
+- lexer::num no longer allocates and frees for its string window, instead uses
+  a stack buffer
+- parser::Node_destroy no longer calls Token_destroy
+- Token_destroy no longer needed, since the lexer no longer allocates
+
+Main improvements in runtime while parsing (less allocations and frees for
+ident, string and double handling) and in cleanup (no more deallocations for
+tokens)
+
+With 250k loc of "hello world":
+
+- Parsing went from 20.9ms to 13.8ms => 1.51x faster
+- Cleanup went from 3.6ms to 0.83ms => 4.34x faster
+
+Old:
+
+    [BENCH] (T-0.0060ms): parsed arguments
+    [BENCH] (T-0.0420ms): read file to String
+    [BENCH] (T-20.8780ms): parsed input
+    [BENCH] (T-6.8080ms): compiled input
+    [BENCH] (bc=500002|globals=250001)
+    [BENCH] (T-0.3440ms): ran vm
+    [BENCH] (T-3.5960ms): destroyed Nodes, vm and input
+
+New:
+
+    [BENCH] (T-0.0060ms): parsed arguments
+    [BENCH] (T-0.0410ms): read file to String
+    [BENCH] (T-13.8280ms): parsed input
+    [BENCH] (T-7.9410ms): compiled input
+    [BENCH] (bc=500002|globals=250001)
+    [BENCH] (T-0.3490ms): ran vm
+    [BENCH] (T-0.8280ms): destroyed Nodes, vm and input
+```
+{{</callout>}}
 
 ## Hashing everything
 
@@ -1142,64 +1287,247 @@ Str IO_read_file_to_string(char *path) {
 }
 ```
 
-> In my benchmark this made the stage before even starting lexing 6x-35x
-> faster, see
-> [`a2cae88`](https://github.com/xNaCly/purple-garden/commit/a2cae881e8d1668d82b918b2554465c0f510e3e0):
->
-> _Please excuse the ugly debug info, I have reworked this till then. Also,
-> lexing and parsing was a single stage back then._
->
-> ```text
-> io: use mmap to make IO_read_file_to_string 6x-35x faster
-> For 5k lines with 4 atoms each (20k atoms), the initial string read was
-> reduced from 0.4390ms to 0.0730ms (6x faster):
-> 
-> Old:
->     [BENCH] (T-0.1620ms): parsed arguments
->     [BENCH] (T-0.4390ms): read file to String
->     [BENCH] (T-10.2020ms): parsed input
->     [BENCH] (T-1.2820ms): compiled input
->     [BENCH] (bc=40008|globals=20004)
->     [BENCH] (T-0.1620ms): ran vm
->     [BENCH] (T-0.6190ms): destroyed Nodes, vm and input
-> 
-> New:
->     [BENCH] (T-0.1510ms): parsed arguments
->     [BENCH] (T-0.0730ms): read file to String
->     [BENCH] (T-10.1350ms): parsed input
->     [BENCH] (T-1.3210ms): compiled input
->     [BENCH] (bc=40008|globals=20004)
->     [BENCH] (T-0.1710ms): ran vm
->     [BENCH] (T-0.6460ms): destroyed Nodes, vm and input
-> 
-> For larger files, such as 250k lines with 4 atoms each (1mio atoms), the
-> initial string read was reduced from 3.472ms to 0.0980ms (35x faster):
-> 
-> Old:
->     [BENCH] (T-0.1430ms): parsed arguments
->     [BENCH] (T-3.4720ms): read file to String
->     [BENCH] (T-434.8770ms): parsed input
->     [BENCH] (T-30.7538ms): compiled input
->     [BENCH] (bc=2040408|globals=1020204)
->     [BENCH] (T-7.5610ms): ran vm
->     [BENCH] (T-37.2170ms): destroyed Nodes, vm and input
-> 
-> New:
->     [BENCH] (T-0.1490ms): parsed arguments
->     [BENCH] (T-0.0980ms): read file to String
->     [BENCH] (T-437.4770ms): parsed input
->     [BENCH] (T-30.8820ms): compiled input
->     [BENCH] (bc=2040408|globals=1020204)
->     [BENCH] (T-7.4540ms): ran vm
->     [BENCH] (T-36.9500ms): destroyed Nodes, vm and input
-> ```
+{{<callout type="Info - Benchmarks">}}
+In my benchmark this made the stage before even starting lexing 6x-35x
+faster, see
+[`a2cae88`](https://github.com/xNaCly/purple-garden/commit/a2cae881e8d1668d82b918b2554465c0f510e3e0):
+
+_Please excuse the ugly debug info, I have reworked this till then. Also,
+lexing and parsing was a single stage back then._
+
+```text
+io: use mmap to make IO_read_file_to_string 6x-35x faster
+For 5k lines with 4 atoms each (20k atoms), the initial string read was
+reduced from 0.4390ms to 0.0730ms (6x faster):
+
+Old:
+    [BENCH] (T-0.1620ms): parsed arguments
+    [BENCH] (T-0.4390ms): read file to String
+    [BENCH] (T-10.2020ms): parsed input
+    [BENCH] (T-1.2820ms): compiled input
+    [BENCH] (bc=40008|globals=20004)
+    [BENCH] (T-0.1620ms): ran vm
+    [BENCH] (T-0.6190ms): destroyed Nodes, vm and input
+
+New:
+    [BENCH] (T-0.1510ms): parsed arguments
+    [BENCH] (T-0.0730ms): read file to String
+    [BENCH] (T-10.1350ms): parsed input
+    [BENCH] (T-1.3210ms): compiled input
+    [BENCH] (bc=40008|globals=20004)
+    [BENCH] (T-0.1710ms): ran vm
+    [BENCH] (T-0.6460ms): destroyed Nodes, vm and input
+
+For larger files, such as 250k lines with 4 atoms each (1mio atoms), the
+initial string read was reduced from 3.472ms to 0.0980ms (35x faster):
+
+Old:
+    [BENCH] (T-0.1430ms): parsed arguments
+    [BENCH] (T-3.4720ms): read file to String
+    [BENCH] (T-434.8770ms): parsed input
+    [BENCH] (T-30.7538ms): compiled input
+    [BENCH] (bc=2040408|globals=1020204)
+    [BENCH] (T-7.5610ms): ran vm
+    [BENCH] (T-37.2170ms): destroyed Nodes, vm and input
+
+New:
+    [BENCH] (T-0.1490ms): parsed arguments
+    [BENCH] (T-0.0980ms): read file to String
+    [BENCH] (T-437.4770ms): parsed input
+    [BENCH] (T-30.8820ms): compiled input
+    [BENCH] (bc=2040408|globals=1020204)
+    [BENCH] (T-7.4540ms): ran vm
+    [BENCH] (T-36.9500ms): destroyed Nodes, vm and input
+```
+
+{{</callout>}}
 
 # Combining select strategies with later compilation pipeline stages
 
-## With the parser
+# Consuming numeric tokens in the compiler
 
-## With the compiler
+As introduced in [On demand double and int64_t
+parsing](#on-demand-double-and-int64_t-parsing), the lexer does not perform
+string to numerical conversions, but rather stores a hash and a window of said
+string. The compiler converts any tokens with this hash only once and refers
+any duplicates to the global pool index of this number.
 
-## Putting it all together
+> The compiler itself will probably be the topic of a future blog article, but I kept it simple at this time.
 
-# Micro and Macro benchmarks
+`token_to_value` is called for all unique (not encountered before and thus not interned) atoms:
+
+```c
+// token_to_value converts tokens, such as strings, idents and numbers to
+// runtime values
+inline static Value *token_to_value(Token *t, Allocator *a) {
+  Value *v = CALL(a, request, sizeof(Value));
+  switch (t->type) {
+  case T_STRING:
+  case T_IDENT:
+    v->type = V_STR;
+    v->string = t->string;
+    break;
+  case T_INTEGER:
+    v->type = V_INT;
+    v->integer = Str_to_int64_t(&t->string);
+    break;
+  case T_DOUBLE:
+    v->type = V_DOUBLE;
+    v->floating = Str_to_double(&t->string);
+    break;
+  default:
+    ASSERT(0, "Unsupported value for token_to_value");
+    break;
+  }
+  return v;
+}
+```
+
+Note the missing cases for `T_FALSE` and `T_TRUE`? They are omitted, because
+there are hard coded entries `0` and `1` in the global pool (`@None` is the
+same, its bound to index `2`).
+
+{{<callout type="Info - Benchmarks">}}
+This resulted in crazy 15ms/64% faster total runtime results for number and
+duplicate heavy test inputs, see
+[`a55a190`](https://github.com/xNaCly/purple-garden/commit/a55a19050d0a496123a27492c5bd9c674221a322).
+
+```text
+lexer+cc: move Str_to_(double|int64_t) parsing from lexer to cc
+This change omits all integer and number parsing from the pipeline but
+the first occurence of each unique integer or number by storing a hash
+of the string representation of said values. At the interning stage in
+the compiler only the first occurence of any hash of a double or integer
+is parsed via Str_to_int64_t or Str_to_double, which reduces the
+theoretically workload for any duplicated number of integers and doubles
+from N to 1.
+
+For a double and integer heavy benchmark (250k loc with 250k duplicated
+doubles and integers) results in:
+
+    - 15ms faster
+    - 64% faster
+    - ~2.8x faster
+
+Prev commit:
+    ./build/bench +V examples/bench.garden
+    [    0.0000ms] main::Args_parse: Parsed arguments
+    [    0.0120ms] io::IO_read_file_to_string: mmaped input of size=2500090B
+    [    0.0050ms] mem::init: Allocated memory block of size=153092096B
+    [   23.8300ms] lexer::Lexer_all: lexed tokens count=1000033
+    [   12.5190ms] parser::Parser_next created AST with node_count=250003
+    [    9.2090ms] cc::cc: Flattened AST to byte code/global pool length=1500048/4
+    [   36.3060ms] vm::Vm_run: executed byte code
+    [    0.3730ms] mem::Allocator::destroy: Deallocated memory space
+    [    0.0410ms] vm::Vm_destroy: teared vm down
+    [    0.0000ms] munmap: unmapped input
+
+New:
+    ./build/bench +V examples/bench.garden
+    [    0.0000ms] main::Args_parse: Parsed arguments
+    [    0.0170ms] io::IO_read_file_to_string: mmaped input of size=2500090B
+    [    0.0060ms] mem::init: Allocated memory block of size=153092096B
+    [    8.5270ms] lexer::Lexer_all: lexed tokens count=1000033
+    [   12.2070ms] parser::Parser_next created AST with node_count=250003
+    [    9.4020ms] cc::cc: Flattened AST to byte code/global pool length=1500048/4
+    [   36.9900ms] vm::Vm_run: executed byte code
+    [    0.3960ms] mem::Allocator::destroy: Deallocated memory space
+    [    0.0480ms] vm::Vm_destroy: teared vm down
+    [    0.0010ms] munmap: unmapped input
+```
+
+{{</callout>}}
+
+
+# Benchmark
+
+So I created, what i would consider a fairly heavy lexer benchmark:
+
+```scheme
+(@Some (@Some (@Some (@None))))
+true false true false
+3.1415 22222222222 .12345
+"string me this, string me that" 
+'quoted-strings-is-a-must-do
+(@let unquoted-strings-are-just-idents (@None))
+unquoted-strings-are-just-idents
+(@None) (+) (-) (*) (/) (=)
+;; COMMENT COMMENT COMMENT
+;; COMMENT COMMENT COMMENT
+;; COMMENT COMMENT COMMENT with whitespace for 3 lines
+
+
+
+;; whitespace end
+```
+
+And I typed `VggyG66666p` to fill 1mio lines (`1000005`).
+
+## On a Laptop
+
+```text
+System:
+  Host: ************* Kernel: 6.11.0-28-generic arch: x86_64 bits: 64
+  Desktop: i3 v: 4.23 Distro: Ubuntu 24.04.2 LTS (Noble Numbat)
+Machine:
+  Type: Laptop System: LENOVO product: 21F8002TGE v: ThinkPad T14s Gen 4
+    serial: <superuser required>
+  Mobo: LENOVO model: 21F8002TGE v: SDK0T76530 WIN
+    serial: <superuser required> UEFI: LENOVO v: R2EET41W (1.22 )
+    date: 09/22/2024
+CPU:
+  Info: 8-core model: AMD Ryzen 7 PRO 7840U w/ Radeon 780M Graphics bits: 64
+    type: MT MCP cache: L2: 8 MiB
+  Speed (MHz): avg: 883 min/max: 400/5132 cores: 1: 1388 2: 400 3: 1396
+    4: 400 5: 400 6: 400 7: 1374 8: 400 9: 1331 10: 400 11: 1357 12: 400
+    13: 1357 14: 1346 15: 1393 16: 400
+```
+
+With the above components.
+
+{{<shellout>}}
+$ make bench
+%SEPARATOR%
+./build/bench +V examples/bench.garden
+[    0.0000ms] main::Args_parse: Parsed arguments
+[    0.0260ms] io::IO_read_file_to_string: mmaped input of size=25466794B
+[    0.0080ms] mem::init: Allocated memory block of size=929537981B
+[  111.5610ms] lexer::Lexer_all: lexed tokens count=3133350
+[  118.5350ms] parser::Parser_next created AST with node_count=1200006
+[   33.5610ms] cc::cc: Flattened AST to byte code/global pool length=2666680/8
+[   17.3500ms] vm::Vm_run: executed byte code
+[   51.4560ms] mem::Allocator::destroy: Deallocated memory space
+[    2.3890ms] vm::Vm_destroy: teared vm down
+[    0.0000ms] munmap: unmapped input
+{{</shellout>}}
+
+I can confidently say I do a million lines or 25,466,794 Bytes in 111.5610ms. Let's do some math:
+
+$$
+\begin{align}
+111.5610ms \textrm{ms} &\triangleq 25,466,749 \mathrm{B} \\
+1 \textrm{ms} &\triangleq 228,276.449655 \mathrm{B} \\
+1000 \textrm{ms} &\triangleq 228,276,449.655 \mathrm{B} \\
+&= \underline{228.28 \mathrm{MB}/\textrm{s}} 
+\end{align}
+$$
+
+In token:
+
+$$
+\begin{align}
+111.5610ms \textrm{ms} &\triangleq 3,133,350 \mathrm{T} \\
+1 \textrm{ms} &\triangleq 28,086.428053 \mathrm{T} \\
+1000 \textrm{ms} &\triangleq 28,086,428.053 \mathrm{T} \\
+&= \underline{28,086,428 \mathrm{T}/\textrm{s}} 
+\end{align}
+$$
+
+Thats not that fast, SIMD can probably do a lot better at this point, but I
+haven't started that experiment yet.
+
+## On a Tower
+
+<!-- TODO: -->
+
+# Putting it all together
