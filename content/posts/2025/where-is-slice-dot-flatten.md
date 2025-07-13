@@ -2,7 +2,7 @@
 title: "Where The FUCK Are slice.Flatten And slice.Map"
 summary: "Go iterators are too minimalist and iter.Seq/iter.Seq2 suck"
 date: 2025-06-22
-tag:
+tags:
     - go
 ---
 

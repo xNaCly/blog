@@ -5,6 +5,7 @@ date: 2025-07-11
 draft: true
 tags:
   - C
+  - pldev
 ---
 
 {{<callout type="Warning">}}
@@ -408,7 +409,6 @@ There are two downsides to this approach:
 2. It makes reading and debugging the lexer far more complicated
    {{</callout>}}
 
-
 ## Abstracting allocations via the Allocator interface
 
 I want to allow the user of purple-garden to choose between allocation
@@ -580,7 +580,6 @@ Allocator *bump_init(size_t size) {
   return a;
 }
 ```
-
 
 ## Operating on zero copy, zero alloc string windows
 
@@ -813,7 +812,7 @@ index 316a494..2280a6b 100644
 ```
 
 Numbers, identifiers and builtins are all also being hashed, I omitted this
-here for clearity and since we will revisit this topic again in this article. 
+here for clearity and since we will revisit this topic again in this article.
 
 ## Interning Tokens
 
@@ -840,10 +839,10 @@ Token *INTERN_TRUE = &SINGLE_TOK(T_TRUE);
 Token *INTERN_EQUAL = &SINGLE_TOK(T_EQUAL);
 Token *INTERN_EOF = &SINGLE_TOK(T_EOF);
 
-// size_t Lexer_all(Lexer *l, Allocator *a, Token **out) 
+// size_t Lexer_all(Lexer *l, Allocator *a, Token **out)
 ```
 
-`SINGLE_TOK` is just: 
+`SINGLE_TOK` is just:
 
 ```c
 #define SINGLE_TOK(t) ((Token){.type = t})
@@ -855,7 +854,7 @@ As introduced in the previous chapters, all identifers are hashed, thus we can
 also hash the known keywords at startup and make comparing them very fast.
 
 Lets take a look at `true` and `false`, both are known keywords and we will
-need to compare found identifers to them. 
+need to compare found identifers to them.
 
 ```c {hl_lines=[12]}
 ident: {
@@ -888,6 +887,25 @@ ident: {
 }
 ```
 
+Both `true_hash` and `false_hash` are computed at startup of `Lexer_all`:
+
+```c {hl_lines=[10,11]}
+size_t Lexer_all(Lexer *l, Allocator *a, Token **out) {
+  ASSERT(out != NULL, "Failed to allocate token list");
+
+  // empty input
+  if (l->input.len == 0) {
+    out[0] = INTERN_EOF;
+    return 1;
+  }
+
+  size_t true_hash = Str_hash(&STRING("true"));
+  size_t false_hash = Str_hash(&STRING("false"));
+
+  // [...]
+}
+```
+
 {{<callout type="Tip - is_alphanum performance deep dive">}}
 
 > I know this function shouldn't be called `is_alphanum` because it allows `[A-Za-z0-9_-]`
@@ -896,14 +914,14 @@ A naive check of `is_alphanum` can be:
 
 ```c
 bool is_alphanum(char cc) {
-    return (cc >= 'a' && cc <= 'z') || (cc >= 'A' && cc <= 'Z') 
+    return (cc >= 'a' && cc <= 'z') || (cc >= 'A' && cc <= 'Z')
         || (cc >= '0' && cc <= '9') || cc == '_' || cc == '-'
 }
 ```
 
 We know we can omit the uppercase check by converting the character to its
 lowercase representation, so lets fold the character, since ASCII upper and
-lowercase characters only differ by a single bit: 
+lowercase characters only differ by a single bit:
 
 ```c
 bool is_alphanum(char cc) {
@@ -931,33 +949,32 @@ There are some other ways that could be more efficient, but I haven't benchmarke
 
 1. statically allocated lookup table like:
 
-    ```c
-    static const bool is_alphanum_lookup[128] = {
-        ['0' ... '9'] = true,
-        ['A' ... 'Z'] = true,
-        ['a' ... 'z'] = true,
-        ['_'] = true,
-        ['-'] = true,
-    };
-    inline static bool is_alphanum(uint8_t cc) {
-        return cc < 128 && is_alphanum_lookup[cc];
-    }
-    ```
-
+   ```c
+   static const bool is_alphanum_lookup[128] = {
+       ['0' ... '9'] = true,
+       ['A' ... 'Z'] = true,
+       ['a' ... 'z'] = true,
+       ['_'] = true,
+       ['-'] = true,
+   };
+   inline static bool is_alphanum(uint8_t cc) {
+       return cc < 128 && is_alphanum_lookup[cc];
+   }
+   ```
 
 2. weird bit sets:
 
-    > I don't fully understand this one and it sucks to read, so no thanks
+   > I don't fully understand this one and it sucks to read, so no thanks
 
-    ```c
-    static const uint64_t table1 = 0x03ff000000000000
-    static const uint64_t table2 = 0x07fffffe07fffffe
+   ```c
+   static const uint64_t table1 = 0x03ff000000000000
+   static const uint64_t table2 = 0x07fffffe07fffffe
 
-    inline static bool is_alphanum(uint8_t cc) {
-        if (cc >= 128) return false;
-        return cc < 64 ? (table1 >> cc) & 1 : (table2 >> (cc - 64)) & 1;
-    }
-    ```
+   inline static bool is_alphanum(uint8_t cc) {
+       if (cc >= 128) return false;
+       return cc < 64 ? (table1 >> cc) & 1 : (table2 >> (cc - 64)) & 1;
+   }
+   ```
 
 {{</callout>}}
 
@@ -966,11 +983,12 @@ There are some other ways that could be more efficient, but I haven't benchmarke
 Let's revisit hashing numbers: as introduced before, all atoms are hashed,
 therefore I am able to use this hash for and while interning. This way the
 compiler converts all duplicated integers and doubles into their numerical
-representation only once (in the compiler). 
+representation only once (in the compiler).
 
-The lexer therefore only needs to store the window of the atoms input.
-While verifying the input to `Str_to_double` and `Str_to_int64_t` are
-valid.
+The lexer therefore only needs to store the window of the atoms input. While
+verifying all characters in this window are valid arguments for `Str_to_double`
+and `Str_to_int64_t`. In a later chapter I'll show the compiler doing on demand
+parsing with the token we created here in the lexer.
 
 ```c
 number: {
@@ -1011,14 +1029,170 @@ number: {
 ```
 
 {{<callout type="Tip - Distinguishing between integers and doubles">}}
-At first purple garden represented all numbers as doubles internally, only
-after benchmarking, I found out that integer math is a lot faster, so it
-makes a lot more sense to store all non floating point numbers as
-integers.
+At first, purple garden's runtime represented all numbers as doubles. After
+benchmarking, I found out that integer math is a lot faster, so it makes a lot
+more sense to store all non floating point numbers as integers. For general
+advice, always benchmark and read the following:
+
+- [Int VS FP performance](https://alammori.com/benchmarks/int-vs-fp-performance) (java, but
+  the point stands)
+- [6.2.2 Integer benefits and pitfalls - GNU Astronomy Utilities](https://www.gnu.org/software/gnuastro/manual/html_node/Integer-benefits-and-pitfalls.html)
+- [Integer operations vs floating point operations on Computational Science Stack Exchange](https://scicomp.stackexchange.com/questions/30353/integer-operations-vs-floating-point-operations)
+
 {{</callout>}}
 
-
 ## Extra: memory mapping the input
+
+Normaly one would consume a file in C by
+
+1. open file descriptor: `fopen`
+3. fread the buffer into a malloced space
+4. zero terminate
+5. close file: `fclose`
+
+```c
+// https://stackoverflow.com/questions/14002954/c-how-to-read-an-entire-file-into-a-buffer
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void) {
+    FILE *f = fopen("textfile.txt", "rb");
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    char *string = malloc(fsize + 1);
+    fread(string, fsize, 1, f);
+    fclose(f);
+
+    string[fsize] = 0;
+    free(string);
+    return EXIT_SUCCESS;
+}
+```
+
+However, you can also do the whole thing a lot faster by instructing the kernel
+to dump the whole file into our virtual memory via
+[`mmap`](https://www.man7.org/linux/man-pages/man3/mmap.3p.html) (Just not
+walking a file two times is already faster).
+
+After opening the file (opening a file with `O_RDONLY` and mapping it with
+`PROT_READ` can be faster than making it mutable), we need it's type (we dont't
+want to open or dump a directory) and it's size (the api wants a mapping block
+size). [`fstat`](https://www.man7.org/linux/man-pages/man3/fstat.3p.html) helps
+us with filling a struct with meta data containing exactly the info we need:
+
+```c
+// taken from https://www.commandlinux.com/man-page/man2/fstat.2.html
+struct stat {
+    dev_t     st_dev;     /* ID of device containing file */
+    ino_t     st_ino;     /* inode number */
+    mode_t    st_mode;    /* protection */
+    nlink_t   st_nlink;   /* number of hard links */
+    uid_t     st_uid;     /* user ID of owner */
+    gid_t     st_gid;     /* group ID of owner */
+    dev_t     st_rdev;    /* device ID (if special file) */
+    off_t     st_size;    /* total size, in bytes */
+    blksize_t st_blksize; /* blocksize for file system I/O */
+    blkcnt_t  st_blocks;  /* number of 512B blocks allocated */
+    time_t    st_atime;   /* time of last access */
+    time_t    st_mtime;   /* time of last modification */
+    time_t    st_ctime;   /* time of last status change */
+};
+```
+
+I use
+[`S_ISREG`](https://www.gnu.org/software/libc/manual/html_node/Testing-File-Type.html#index-S_005fISREG):
+to check if the handled is a regular file. After mmapping with the size stored
+in `stat.st_size` I do a bookkeeping, see the combined snippet below:
+
+```c
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include "common.h"
+#include "io.h"
+
+Str IO_read_file_to_string(char *path) {
+  ASSERT(path != NULL, "path was NULL");
+
+  int fd = open(path, O_RDONLY);
+  ASSERT(fd != -1, "failed to open input file");
+
+  struct stat s;
+  fstat(fd, &s);
+  ASSERT(S_ISREG(s.st_mode), "path is not a file");
+
+  long length = s.st_size;
+  if (length < 0) {
+    close(fd);
+    ASSERT(length > 0, "input is empty")
+  }
+
+  char *buffer = 0;
+  if (length != 0) {
+    buffer = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, 0);
+  }
+
+  ASSERT(close(fd) == 0, "failed to close file");
+  ASSERT(buffer != MAP_FAILED, "failed to mmap input")
+  return (Str){.len = length, .p = (const uint8_t *)buffer};
+}
+```
+
+> In my benchmark this made the stage before even starting lexing 6x-35x
+> faster, see
+> [`a2cae88`](https://github.com/xNaCly/purple-garden/commit/a2cae881e8d1668d82b918b2554465c0f510e3e0):
+>
+> _Please excuse the ugly debug info, I have reworked this till then. Also,
+> lexing and parsing was a single stage back then._
+>
+> ```text
+> io: use mmap to make IO_read_file_to_string 6x-35x faster
+> For 5k lines with 4 atoms each (20k atoms), the initial string read was
+> reduced from 0.4390ms to 0.0730ms (6x faster):
+> 
+> Old:
+>     [BENCH] (T-0.1620ms): parsed arguments
+>     [BENCH] (T-0.4390ms): read file to String
+>     [BENCH] (T-10.2020ms): parsed input
+>     [BENCH] (T-1.2820ms): compiled input
+>     [BENCH] (bc=40008|globals=20004)
+>     [BENCH] (T-0.1620ms): ran vm
+>     [BENCH] (T-0.6190ms): destroyed Nodes, vm and input
+> 
+> New:
+>     [BENCH] (T-0.1510ms): parsed arguments
+>     [BENCH] (T-0.0730ms): read file to String
+>     [BENCH] (T-10.1350ms): parsed input
+>     [BENCH] (T-1.3210ms): compiled input
+>     [BENCH] (bc=40008|globals=20004)
+>     [BENCH] (T-0.1710ms): ran vm
+>     [BENCH] (T-0.6460ms): destroyed Nodes, vm and input
+> 
+> For larger files, such as 250k lines with 4 atoms each (1mio atoms), the
+> initial string read was reduced from 3.472ms to 0.0980ms (35x faster):
+> 
+> Old:
+>     [BENCH] (T-0.1430ms): parsed arguments
+>     [BENCH] (T-3.4720ms): read file to String
+>     [BENCH] (T-434.8770ms): parsed input
+>     [BENCH] (T-30.7538ms): compiled input
+>     [BENCH] (bc=2040408|globals=1020204)
+>     [BENCH] (T-7.5610ms): ran vm
+>     [BENCH] (T-37.2170ms): destroyed Nodes, vm and input
+> 
+> New:
+>     [BENCH] (T-0.1490ms): parsed arguments
+>     [BENCH] (T-0.0980ms): read file to String
+>     [BENCH] (T-437.4770ms): parsed input
+>     [BENCH] (T-30.8820ms): compiled input
+>     [BENCH] (bc=2040408|globals=1020204)
+>     [BENCH] (T-7.4540ms): ran vm
+>     [BENCH] (T-36.9500ms): destroyed Nodes, vm and input
+> ```
 
 # Combining select strategies with later compilation pipeline stages
 
