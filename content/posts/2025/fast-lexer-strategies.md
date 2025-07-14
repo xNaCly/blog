@@ -2,7 +2,6 @@
 title: "Strategies for very fast Lexers"
 summary: "Making compilation pipelines fast, starting with the tokenizer"
 date: 2025-07-14
-draft: true
 math: true
 tags:
   - C
@@ -1462,7 +1461,9 @@ And I typed `VggyG66666p` to fill 1mio lines (`1000005`).
 
 ## On a Laptop
 
-```text
+{{<shellout>}}
+$ inxi -CMD
+%SEPARATOR%
 System:
   Host: ************* Kernel: 6.11.0-28-generic arch: x86_64 bits: 64
   Desktop: i3 v: 4.23 Distro: Ubuntu 24.04.2 LTS (Noble Numbat)
@@ -1478,7 +1479,7 @@ CPU:
   Speed (MHz): avg: 883 min/max: 400/5132 cores: 1: 1388 2: 400 3: 1396
     4: 400 5: 400 6: 400 7: 1374 8: 400 9: 1331 10: 400 11: 1357 12: 400
     13: 1357 14: 1346 15: 1393 16: 400
-```
+{{</shellout>}}
 
 With the above components.
 
@@ -1486,16 +1487,16 @@ With the above components.
 $ make bench
 %SEPARATOR%
 ./build/bench +V examples/bench.garden
-[ 0.0000ms] main::Args_parse: Parsed arguments
-[ 0.0150ms] io::IO_read_file_to_string: mmaped input of size=25466794B
-[ 0.0060ms] mem::init: Allocated memory block of size=929537981B
-[ 43.9190ms] lexer::Lexer_all: lexed tokens count=3133350
-[ 48.8460ms] parser::Parser_next created AST with node_count=1200006
-[ 18.2070ms] cc::cc: Flattened AST to byte code/global pool length=2666680/8
-[ 8.9970ms] vm::Vm_run: executed byte code
-[ 26.7470ms] mem::Allocator::destroy: Deallocated memory space
-[ 1.0180ms] vm::Vm_destroy: teared vm down
-[ 0.0000ms] munmap: unmapped input
+[    0.0000ms] main::Args_parse: Parsed arguments
+[    0.0150ms] io::IO_read_file_to_string: mmaped input of size=25466794B
+[    0.0060ms] mem::init: Allocated memory block of size=929537981B
+[   43.9190ms] lexer::Lexer_all: lexed tokens count=3133350
+[   48.8460ms] parser::Parser_next created AST with node_count=1200006
+[   18.2070ms] cc::cc: Flattened AST to byte code/global pool length=2666680/8
+[    8.9970ms] vm::Vm_run: executed byte code
+[   26.7470ms] mem::Allocator::destroy: Deallocated memory space
+[    1.0180ms] vm::Vm_destroy: teared vm down
+[    0.0000ms] munmap: unmapped input
 {{</shellout>}}
 
 I can confidently say I do a million lines or 25,466,794 Bytes in 44ms. Let's do some math:
@@ -1525,7 +1526,63 @@ However, I haven't started that experiment yet.
 
 ## On a Tower
 
-<!-- TODO: -->
+{{<shellout>}}
+$ inxi -CMD
+%SEPARATOR%
+System:
+  Host: comfyputer Kernel: 6.15.4-arch2-1 arch: x86_64
+    bits: 64
+  Desktop: i3 v: 4.24 Distro: Arch Linux
+Machine:
+  Type: Desktop Mobo: ASUSTeK model: PRIME B450-PLUS
+    v: Rev X.0x serial: <superuser required>
+    UEFI: American Megatrends v: 2008 date: 12/06/2019
+CPU:
+  Info: 8-core model: AMD Ryzen 7 3700X bits: 64
+    type: MT MCP cache: L2: 4 MiB
+  Speed (MHz): avg: 4052 min/max: 2200/4979 cores:
+    1: 4052 2: 4052 3: 4052 4: 4052 5: 4052 6: 4052
+    7: 4052 8: 4052 9: 4052 10: 4052 11: 4052 12: 4052
+    13: 4052 14: 4052 15: 4052 16: 4052
+{{</shellout>}}
+
+So we are around 14ms faster on my tower.
+
+```
+./build/bench +V examples/bench.garden
+[    0.0000ms] main::Args_parse: Parsed arguments
+[    0.0070ms] io::IO_read_file_to_string: mmaped input of size=25400127B
+[    0.0030ms] mem::init: Allocated memory block of size=927104635B
+[   30.9930ms] lexer::Lexer_all: lexed tokens count=3133350
+[   22.6340ms] parser::Parser_next created AST with node_count=1200006
+[   10.1480ms] cc::cc: Flattened AST to byte code/global pool length=2666680/8
+[    7.4800ms] vm::Vm_run: executed byte code
+[    0.7520ms] mem::Allocator::destroy: Deallocated memory space
+[    0.0620ms] vm::Vm_destroy: teared vm down
+[    0.0000ms] munmap: unmapped input
+```
+
+The same math as above, just with 30ms instead of 44ms:
+
+$$
+\begin{align}
+30 \textrm{ms} &\triangleq 25,466,749 \mathrm{B} \\
+1 \textrm{ms} &\triangleq 848,891.633333 \mathrm{B} \\
+1000 \textrm{ms} &\triangleq 848,891,633.333 \mathrm{B} \\
+&= \underline{848.89 \mathrm{MB}/\textrm{s}}
+\end{align}
+$$
+
+In token:
+
+$$
+\begin{align}
+30 \textrm{ms} &\triangleq 3,133,350 \mathrm{T} \\
+1 \textrm{ms} &\triangleq 104,445 \mathrm{T} \\
+1000 \textrm{ms} &\triangleq 104,445,000 \mathrm{T} \\
+&= \underline{104,445,000 \mathrm{T}/\textrm{s}}
+\end{align}
+$$
 
 ## Benchmark contexts
 
@@ -1547,6 +1604,7 @@ lexer has for 7.5mio lines lexer heavy benchmark inputs.
 | wc                         | 1.73 s      |
 |                            |             |
 | purple-garden (laptop)     | 0.308s      |
+| purple-garden (tower)     | 0.150s      |
 
 # What next
 
@@ -1559,7 +1617,7 @@ A summary what I implemented in this article:
 - inline hashing for atoms that need it (strings, idents, numeric)
 - fast paths for true and false
 
-While 580MB/s is already pretty fast, I want to go further, some things I have planned:
+While 580-848 MB/s is already pretty fast, I want to go further, some things I have planned:
 
 - use the absurd bit set based `is_alphanum` checks
 - use SIMD for comments and whitespace
