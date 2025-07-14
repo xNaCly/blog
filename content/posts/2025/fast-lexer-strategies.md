@@ -1,7 +1,7 @@
 ---
 title: "Strategies for very fast Lexers"
 summary: "Making compilation pipelines fast, starting with the tokenizer"
-date: 2025-07-11
+date: 2025-07-14
 draft: true
 math: true
 tags:
@@ -10,11 +10,12 @@ tags:
 ---
 
 In this blog post I'll explain strategies I used to make the purple garden
-lexer really fast. 
+lexer really fast.
 
-> Purple garden is an s-expr based language I am currently developing for
-> myself. Its my attempt at building a language I like, with a battery included
-> approach, while designing it with performance in mind.
+> [purple-garden](https://github.com/xNaCly/purple-garden) is an s-expr based
+> language I am currently developing for myself. Its my attempt at building a
+> language I like, with a battery included approach, while designing it with
+> performance in mind.
 
 This doesn't mean all approaches are feasible for your use case, architecture
 and design. I tried to bring receipts for my performance claims, so
@@ -22,7 +23,6 @@ watch out for these blocks at the end of chapters:
 
 {{<callout type="Info - Benchmark">}}
 {{</callout>}}
-
 
 # Introduction to Lexing
 
@@ -591,7 +591,6 @@ Allocator *bump_init(size_t size) {
 }
 ```
 
-
 {{<callout type="Info - Benchmarks">}}
 
 This reduced the total runtime by like 24ms or made it 1.58x faster, see
@@ -881,6 +880,7 @@ New:
     [BENCH] (T-0.3490ms): ran vm
     [BENCH] (T-0.8280ms): destroyed Nodes, vm and input
 ```
+
 {{</callout>}}
 
 ## Hashing everything
@@ -1082,7 +1082,7 @@ reproducible impact of reducing the runtime by 1-5% for identifier heavy
 inputs, so I marked the function as "private" `static inline`:
 
 ```c
-inline static bool is_alphanum(uint8_t cc) {
+__attribute__((always_inline)) inline static bool is_alphanum(uint8_t cc) {
   uint8_t lower = cc | 0x20;
   bool is_alpha = (lower >= 'a' && lower <= 'z');
   bool is_digit = (cc >= '0' && cc <= '9');
@@ -1102,7 +1102,7 @@ There are some other ways that could be more efficient, but I haven't benchmarke
        ['_'] = true,
        ['-'] = true,
    };
-   inline static bool is_alphanum(uint8_t cc) {
+   __attribute__((always_inline)) inline static bool is_alphanum(uint8_t cc) {
        return cc < 128 && is_alphanum_lookup[cc];
    }
    ```
@@ -1115,7 +1115,7 @@ There are some other ways that could be more efficient, but I haven't benchmarke
    static const uint64_t table1 = 0x03ff000000000000
    static const uint64_t table2 = 0x07fffffe07fffffe
 
-   inline static bool is_alphanum(uint8_t cc) {
+    __attribute__((always_inline)) inline static bool is_alphanum(uint8_t cc) {
        if (cc >= 128) return false;
        return cc < 64 ? (table1 >> cc) & 1 : (table2 >> (cc - 64)) & 1;
    }
@@ -1191,9 +1191,9 @@ advice, always benchmark and read the following:
 Normaly one would consume a file in C by
 
 1. open file descriptor: `fopen`
-3. fread the buffer into a malloced space
-4. zero terminate
-5. close file: `fclose`
+2. fread the buffer into a malloced space
+3. zero terminate
+4. close file: `fclose`
 
 ```c
 // https://stackoverflow.com/questions/14002954/c-how-to-read-an-entire-file-into-a-buffer
@@ -1342,8 +1342,6 @@ New:
 
 {{</callout>}}
 
-# Combining select strategies with later compilation pipeline stages
-
 # Consuming numeric tokens in the compiler
 
 As introduced in [On demand double and int64_t
@@ -1438,7 +1436,6 @@ New:
 
 {{</callout>}}
 
-
 # Benchmark
 
 So I created, what i would consider a fairly heavy lexer benchmark:
@@ -1447,7 +1444,7 @@ So I created, what i would consider a fairly heavy lexer benchmark:
 (@Some (@Some (@Some (@None))))
 true false true false
 3.1415 22222222222 .12345
-"string me this, string me that" 
+"string me this, string me that"
 'quoted-strings-is-a-must-do
 (@let unquoted-strings-are-just-idents (@None))
 unquoted-strings-are-just-idents
@@ -1489,26 +1486,26 @@ With the above components.
 $ make bench
 %SEPARATOR%
 ./build/bench +V examples/bench.garden
-[    0.0000ms] main::Args_parse: Parsed arguments
-[    0.0260ms] io::IO_read_file_to_string: mmaped input of size=25466794B
-[    0.0080ms] mem::init: Allocated memory block of size=929537981B
-[  111.5610ms] lexer::Lexer_all: lexed tokens count=3133350
-[  118.5350ms] parser::Parser_next created AST with node_count=1200006
-[   33.5610ms] cc::cc: Flattened AST to byte code/global pool length=2666680/8
-[   17.3500ms] vm::Vm_run: executed byte code
-[   51.4560ms] mem::Allocator::destroy: Deallocated memory space
-[    2.3890ms] vm::Vm_destroy: teared vm down
-[    0.0000ms] munmap: unmapped input
+[ 0.0000ms] main::Args_parse: Parsed arguments
+[ 0.0150ms] io::IO_read_file_to_string: mmaped input of size=25466794B
+[ 0.0060ms] mem::init: Allocated memory block of size=929537981B
+[ 43.9190ms] lexer::Lexer_all: lexed tokens count=3133350
+[ 48.8460ms] parser::Parser_next created AST with node_count=1200006
+[ 18.2070ms] cc::cc: Flattened AST to byte code/global pool length=2666680/8
+[ 8.9970ms] vm::Vm_run: executed byte code
+[ 26.7470ms] mem::Allocator::destroy: Deallocated memory space
+[ 1.0180ms] vm::Vm_destroy: teared vm down
+[ 0.0000ms] munmap: unmapped input
 {{</shellout>}}
 
-I can confidently say I do a million lines or 25,466,794 Bytes in 111.5610ms. Let's do some math:
+I can confidently say I do a million lines or 25,466,794 Bytes in 44ms. Let's do some math:
 
 $$
 \begin{align}
-111.5610ms \textrm{ms} &\triangleq 25,466,749 \mathrm{B} \\
-1 \textrm{ms} &\triangleq 228,276.449655 \mathrm{B} \\
-1000 \textrm{ms} &\triangleq 228,276,449.655 \mathrm{B} \\
-&= \underline{228.28 \mathrm{MB}/\textrm{s}} 
+44 \textrm{ms} &\triangleq 25,466,749 \mathrm{B} \\
+1 \textrm{ms} &\triangleq 578,789.75 \mathrm{B} \\
+1000 \textrm{ms} &\triangleq 578,789,750 \mathrm{B} \\
+&= \underline{578,79 \mathrm{MB}/\textrm{s}}
 \end{align}
 $$
 
@@ -1516,18 +1513,379 @@ In token:
 
 $$
 \begin{align}
-111.5610ms \textrm{ms} &\triangleq 3,133,350 \mathrm{T} \\
-1 \textrm{ms} &\triangleq 28,086.428053 \mathrm{T} \\
-1000 \textrm{ms} &\triangleq 28,086,428.053 \mathrm{T} \\
-&= \underline{28,086,428 \mathrm{T}/\textrm{s}} 
+44 \textrm{ms} &\triangleq 3,133,350 \mathrm{T} \\
+1 \textrm{ms} &\triangleq 71212.5 \mathrm{T} \\
+1000 \textrm{ms} &\triangleq 71,212,500 \mathrm{T} \\
+&= \underline{71,212,500 \mathrm{T}/\textrm{s}}
 \end{align}
 $$
 
-Thats not that fast, SIMD can probably do a lot better at this point, but I
-haven't started that experiment yet.
+That's pretty fast, but SIMD can probably do a lot better at this point.
+However, I haven't started that experiment yet.
 
 ## On a Tower
 
 <!-- TODO: -->
 
+## Benchmark contexts
+
+For a C input of 7.5 mio loc, which is of course more complex to tokenize then
+my language, see [_Some Strategies For Fast Lexical Analysis when Parsing
+Programming Languages_](https://nothings.org/computer/lexing.html). The
+following numbers are available and I added the performance the purple-garden
+lexer has for 7.5mio lines lexer heavy benchmark inputs.
+
+| lexer                      | performance |
+| -------------------------- | ----------- |
+| flex (default)             | 13.56 s     |
+| stb_lex (w/symbol hashing) | 4.84 s      |
+| stb_lex                    | 4.23 s      |
+| flex -F (fast)             | 3.07 s      |
+| flex -f (full)             | 2.92 s      |
+| handcoded                  | 2.45 s      |
+| handcoded mmap             | 2.14 s      |
+| wc                         | 1.73 s      |
+|                            |             |
+| purple-garden (laptop)     | 0.308s      |
+
+# What next
+
+A summary what I implemented in this article:
+
+- Jump table for direct threading
+- 0 copy and window based tokens
+- interned and stateless tokens
+- bump allocator for unique tokens
+- inline hashing for atoms that need it (strings, idents, numeric)
+- fast paths for true and false
+
+While 580MB/s is already pretty fast, I want to go further, some things I have planned:
+
+- use the absurd bit set based `is_alphanum` checks
+- use SIMD for comments and whitespace
+- use SIMD as a preprocessing step to find markers for tokens 16 bytes at a time
+- replace FNV-1a with a faster hashing algorithm, something like [xxHash](https://xxhash.com/)
+- prefetch some amount of bytes to reduce L1 & L2 latency
+- mmap larger inputs with `MAP_HUGETLB`
+- maybe align mmap to 64 byte boundaries for SIMD
+
+
 # Putting it all together
+
+```c
+#include "lexer.h"
+#include "common.h"
+#include "mem.h"
+#include "strings.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define SINGLE_TOK(t) ((Token){.type = t})
+
+Str TOKEN_TYPE_MAP[] = {[T_DELIMITOR_LEFT] = STRING("T_DELIMITOR_LEFT"),
+                        [T_DELIMITOR_RIGHT] = STRING("T_DELIMITOR_RIGHT"),
+                        [T_BRAKET_LEFT] = STRING("T_BRAKET_LEFT"),
+                        [T_BRAKET_RIGHT] = STRING("T_BRAKET_RIGHT"),
+                        [T_STRING] = STRING("T_STRING"),
+                        [T_TRUE] = STRING("T_TRUE"),
+                        [T_FALSE] = STRING("T_FALSE"),
+                        [T_DOUBLE] = STRING("T_DOUBLE"),
+                        [T_INTEGER] = STRING("T_INTEGER"),
+                        [T_BUILTIN] = STRING("T_BUILTIN"),
+                        [T_IDENT] = STRING("T_IDENT"),
+                        [T_PLUS] = STRING("T_PLUS"),
+                        [T_MINUS] = STRING("T_MINUS"),
+                        [T_ASTERISKS] = STRING("T_ASTERISKS"),
+                        [T_SLASH] = STRING("T_SLASH"),
+                        [T_EQUAL] = STRING("T_EQUAL"),
+                        [T_EOF] = STRING("T_EOF")};
+
+Lexer Lexer_new(Str input) {
+  return (Lexer){
+      .input = input,
+      .pos = 0,
+  };
+}
+
+#define cur(L) (L->input.p[L->pos])
+
+__attribute__((always_inline)) inline static bool is_alphanum(uint8_t cc) {
+  uint8_t lower = cc | 0x20;
+  bool is_alpha = (lower >= 'a' && lower <= 'z');
+  bool is_digit = (cc >= '0' && cc <= '9');
+  return is_alpha || is_digit || cc == '_' || cc == '-';
+}
+
+// we can "intern" these, since all of them are the same, regardless of position
+Token *INTERN_DELIMITOR_LEFT = &SINGLE_TOK(T_DELIMITOR_LEFT);
+Token *INTERN_DELIMITOR_RIGHT = &SINGLE_TOK(T_DELIMITOR_RIGHT);
+Token *INTERN_BRAKET_LEFT = &SINGLE_TOK(T_BRAKET_LEFT);
+Token *INTERN_BRAKET_RIGHT = &SINGLE_TOK(T_BRAKET_RIGHT);
+Token *INTERN_MINUS = &SINGLE_TOK(T_MINUS);
+Token *INTERN_PLUS = &SINGLE_TOK(T_PLUS);
+Token *INTERN_ASTERISKS = &SINGLE_TOK(T_ASTERISKS);
+Token *INTERN_SLASH = &SINGLE_TOK(T_SLASH);
+Token *INTERN_FALSE = &SINGLE_TOK(T_FALSE);
+Token *INTERN_TRUE = &SINGLE_TOK(T_TRUE);
+Token *INTERN_EQUAL = &SINGLE_TOK(T_EQUAL);
+Token *INTERN_EOF = &SINGLE_TOK(T_EOF);
+
+size_t Lexer_all(Lexer *l, Allocator *a, Token **out) {
+  ASSERT(out != NULL, "Failed to allocate token list");
+
+  // empty input
+  if (l->input.len == 0) {
+    out[0] = INTERN_EOF;
+    return 1;
+  }
+
+  size_t true_hash = Str_hash(&STRING("true"));
+  size_t false_hash = Str_hash(&STRING("false"));
+
+  size_t count = 0;
+  static void *jump_table[256] = {
+      [0 ... 255] = &&unknown,
+      [' '] = &&whitespace,
+      ['\t'] = &&whitespace,
+      ['\n'] = &&whitespace,
+      [';'] = &&comment,
+      ['('] = &&delimitor_left,
+      [')'] = &&delimitor_right,
+      ['@'] = &&builtin,
+      ['.'] = &&number,
+      ['0' ... '9'] = &&number,
+      ['a' ... 'z'] = &&ident,
+      ['A' ... 'Z'] = &&ident,
+      ['_'] = &&ident,
+      ['\''] = &&quoted,
+      ['"'] = &&string,
+      ['+'] = &&plus,
+      ['-'] = &&minus,
+      ['/'] = &&slash,
+      ['*'] = &&asterisks,
+      ['='] = &&equal,
+      ['['] = &&braket_left,
+      [']'] = &&braket_right,
+      [0] = &&end,
+  };
+
+#define JUMP_TARGET goto *jump_table[(int32_t)l->input.p[l->pos]]
+
+  JUMP_TARGET;
+
+delimitor_left:
+  out[count++] = INTERN_DELIMITOR_LEFT;
+  l->pos++;
+  JUMP_TARGET;
+
+delimitor_right:
+  out[count++] = INTERN_DELIMITOR_RIGHT;
+  l->pos++;
+  JUMP_TARGET;
+
+braket_left:
+  out[count++] = INTERN_BRAKET_LEFT;
+  l->pos++;
+  JUMP_TARGET;
+
+braket_right:
+  out[count++] = INTERN_BRAKET_RIGHT;
+  l->pos++;
+  JUMP_TARGET;
+
+builtin: {
+  l->pos++;
+  // not an ident after @, this is shit
+  if (!is_alphanum(cur(l))) {
+    out[count++] = INTERN_EOF;
+  }
+  size_t start = l->pos;
+  size_t hash = FNV_OFFSET_BASIS;
+  for (char cc = cur(l); cc > 0 && is_alphanum(cc); l->pos++, cc = cur(l)) {
+    hash ^= cc;
+    hash *= FNV_PRIME;
+  }
+
+  size_t len = l->pos - start;
+  Str s = (Str){
+      .p = l->input.p + start,
+      .len = len,
+      .hash = hash,
+  };
+  Token *b = CALL(a, request, sizeof(Token));
+  b->string = s;
+  b->type = T_BUILTIN;
+  out[count++] = b;
+  JUMP_TARGET;
+}
+
+plus:
+  out[count++] = INTERN_PLUS;
+  l->pos++;
+  JUMP_TARGET;
+
+minus:
+  out[count++] = INTERN_MINUS;
+  l->pos++;
+  JUMP_TARGET;
+
+slash:
+  out[count++] = INTERN_SLASH;
+  l->pos++;
+  JUMP_TARGET;
+
+equal:
+  out[count++] = INTERN_EQUAL;
+  l->pos++;
+  JUMP_TARGET;
+
+asterisks:
+  out[count++] = INTERN_ASTERISKS;
+  l->pos++;
+  JUMP_TARGET;
+
+number: {
+  size_t start = l->pos;
+  size_t i = start;
+  bool is_double = false;
+  size_t hash = FNV_OFFSET_BASIS;
+  for (; i < l->input.len; i++) {
+    char cc = l->input.p[i];
+    hash ^= cc;
+    hash *= FNV_PRIME;
+    if (cc >= '0' && cc <= '9')
+      continue;
+    if (cc == '.') {
+      ASSERT(!is_double, "Two dots in double");
+      is_double = true;
+      continue;
+    }
+    break;
+  }
+
+  l->pos = i;
+  Token *n = CALL(a, request, sizeof(Token));
+  n->string = (Str){
+      .p = l->input.p + start,
+      .len = i - start,
+      .hash = hash,
+  };
+  if (is_double) {
+    n->type = T_DOUBLE;
+  } else {
+    n->type = T_INTEGER;
+  }
+
+  out[count++] = n;
+  JUMP_TARGET;
+}
+
+ident: {
+  size_t start = l->pos;
+  size_t hash = FNV_OFFSET_BASIS;
+  for (char cc = cur(l); cc > 0 && is_alphanum(cc); l->pos++, cc = cur(l)) {
+    hash ^= cc;
+    hash *= FNV_PRIME;
+  }
+
+  size_t len = l->pos - start;
+  Token *t;
+  if (hash == true_hash) {
+    t = INTERN_TRUE;
+  } else if (hash == false_hash) {
+    t = INTERN_FALSE;
+  } else {
+    t = CALL(a, request, sizeof(Token));
+    t->type = T_IDENT;
+    t->string = (Str){
+        .p = l->input.p + start,
+        .len = len,
+        .hash = hash,
+    };
+  }
+  out[count++] = t;
+  JUMP_TARGET;
+}
+
+// same as string but only with leading '
+quoted: {
+  // skip '
+  l->pos++;
+  size_t start = l->pos;
+  size_t hash = FNV_OFFSET_BASIS;
+  for (char cc = cur(l); cc > 0 && is_alphanum(cc); l->pos++, cc = cur(l)) {
+    hash ^= cc;
+    hash *= FNV_PRIME;
+  }
+
+  size_t len = l->pos - start;
+  Token *t;
+  t = CALL(a, request, sizeof(Token));
+  t->type = T_STRING;
+  t->string = (Str){
+      .p = l->input.p + start,
+      .len = len,
+      .hash = hash,
+  };
+  out[count++] = t;
+  JUMP_TARGET;
+}
+
+string: {
+  // skip "
+  l->pos++;
+  size_t start = l->pos;
+  size_t hash = FNV_OFFSET_BASIS;
+  for (char cc = cur(l); cc > 0 && cc != '"'; l->pos++, cc = cur(l)) {
+    hash ^= cc;
+    hash *= FNV_PRIME;
+  }
+
+  if (UNLIKELY(cur(l) != '"')) {
+    Str slice = Str_slice(&l->input, l->pos, l->input.len);
+    fprintf(stderr, "lex: Unterminated string near: '%.*s'", (int)slice.len,
+            slice.p);
+    out[count++] = INTERN_EOF;
+  } else {
+    Token *t = CALL(a, request, sizeof(Token));
+    t->type = T_STRING;
+    t->string = (Str){
+        .p = l->input.p + start,
+        .len = l->pos - start,
+        .hash = hash,
+    };
+    out[count++] = t;
+    // skip "
+    l->pos++;
+  }
+  JUMP_TARGET;
+}
+
+comment:
+  for (char cc = cur(l); cc > 0 && cc != '\n'; l->pos++, cc = cur(l)) {
+  }
+  JUMP_TARGET;
+
+whitespace:
+  l->pos++;
+  JUMP_TARGET;
+
+unknown: {
+  uint8_t c = cur(l);
+  ASSERT(0, "Unexpected byte '%c' (0x%X) in input", c, c)
+}
+
+end:
+  out[count++] = INTERN_EOF;
+  return count;
+}
+
+#undef SINGLE_TOK
+```
+
+Thank you for reading this far. If you have any suggestions or feedback, feel
+free to send me an email at [contact@xnacly.me](mailto:contact@xnacly.me) or:
+
+> `contact@xnacly.me`
