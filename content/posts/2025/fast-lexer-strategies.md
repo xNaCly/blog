@@ -1548,7 +1548,7 @@ CPU:
 
 So we are around 14ms faster on my tower.
 
-```
+```text
 ./build/bench +V examples/bench.garden
 [    0.0000ms] main::Args_parse: Parsed arguments
 [    0.0070ms] io::IO_read_file_to_string: mmaped input of size=25400127B
