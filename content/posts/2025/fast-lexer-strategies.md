@@ -109,7 +109,7 @@ The above is just an example and I'll go into detail below:
 
 ## Defining purple garden's Tokens
 
-A token is not only a set characters it can be mapped to, but it also holds:
+A token is not only a set of characters it can be mapped to, but it also holds:
 
 - A token type, to easily distinguish between tokens
 - Positional information:
@@ -264,20 +264,20 @@ easiest way I could think of implementing this was to:
 
    ```c
    static void *jump_table[256] = {
-     // first bind all possible bytes to the unkown label, so there are no out
+     // first bind all possible bytes to the unknown label, so there are no out
      // of bound reads
      [0 ... 255] = &&unknown,
 
      // replace all known bytes with correct jump labels
      ['('] = &&delimitor_left,
      [')'] = &&delimitor_right,
-     ['['] = &&braket_left,
-     [']'] = &&braket_right,
+     ['['] = &&bracket_left,
+     [']'] = &&bracket_right,
      ['@'] = &&builtin,
      ['+'] = &&plus,
      ['-'] = &&minus,
      ['/'] = &&slash,
-     ['*'] = &&asterisks,
+     ['*'] = &&asterisk,
      ['='] = &&equal,
      [' '] = &&whitespace,
      ['\t'] = &&whitespace,
@@ -323,13 +323,13 @@ size_t Lexer_all(Lexer *l, Allocator *a, Token **out) {
       [0 ... 255] = &&unknown,
       ['('] = &&delimitor_left,
       [')'] = &&delimitor_right,
-      ['['] = &&braket_left,
-      [']'] = &&braket_right,
+      ['['] = &&bracket_left,
+      [']'] = &&bracket_right,
       ['@'] = &&builtin,
       ['+'] = &&plus,
       ['-'] = &&minus,
       ['/'] = &&slash,
-      ['*'] = &&asterisks,
+      ['*'] = &&asterisk,
       ['='] = &&equal,
       [' '] = &&whitespace,
       ['\t'] = &&whitespace,
@@ -355,10 +355,10 @@ delimitor_left:
 delimitor_right:
   JUMP_TARGET;
 
-braket_left:
+bracket_left:
   JUMP_TARGET;
 
-braket_right:
+bracket_right:
   JUMP_TARGET;
 
 builtin:
@@ -376,7 +376,7 @@ slash:
 equal:
   JUMP_TARGET;
 
-asterisks:
+asterisk:
   JUMP_TARGET;
 
 number:
@@ -706,7 +706,7 @@ typedef struct {
 
 Creating a `Str` from a c style `const char*` can be done by passing it into
 the `STRING` macro, gcc can evaluate all operations inside of it at compile
-time. Since the view doesnt own its underlying data, its cheap to copy and
+time. Since the view doesn't own its underlying data, its cheap to copy and
 create slices by just pointing new views to the underlying buffer.
 
 I use this struct throughout the whole codebase, but specifically inside of the
@@ -786,7 +786,7 @@ int64_t Str_to_int64_t(const Str *str) {
 
 Doubles are represented differently, specifcally by their mantiassa and
 exponent, requiring a slightly more sophisticated conversion algorithm. In the
-same vain as `Str_to_int64_t`, validating is already done by the lexer to the
+same vein as `Str_to_int64_t`, validating is already done by the lexer to the
 extend of only allowing any of `.1234567890`.
 
 ```c
@@ -1722,10 +1722,10 @@ size_t Lexer_all(Lexer *l, Allocator *a, Token **out) {
       ['+'] = &&plus,
       ['-'] = &&minus,
       ['/'] = &&slash,
-      ['*'] = &&asterisks,
+      ['*'] = &&asterisk,
       ['='] = &&equal,
-      ['['] = &&braket_left,
-      [']'] = &&braket_right,
+      ['['] = &&bracket_left,
+      [']'] = &&bracket_right,
       [0] = &&end,
   };
 
@@ -1743,12 +1743,12 @@ delimitor_right:
   l->pos++;
   JUMP_TARGET;
 
-braket_left:
+bracket_left:
   out[count++] = INTERN_BRAKET_LEFT;
   l->pos++;
   JUMP_TARGET;
 
-braket_right:
+bracket_right:
   out[count++] = INTERN_BRAKET_RIGHT;
   l->pos++;
   JUMP_TARGET;
@@ -1799,7 +1799,7 @@ equal:
   l->pos++;
   JUMP_TARGET;
 
-asterisks:
+asterisk:
   out[count++] = INTERN_ASTERISKS;
   l->pos++;
   JUMP_TARGET;
