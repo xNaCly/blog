@@ -1,7 +1,7 @@
 ---
 title: "Handrolling ISO8601 Support for Go"
 summary: "So I need to use ISO8601 durations which Go doesn't support"
-date: 2025-07-24
+date: 2025-07-21
 draft: true
 math: true
 tags:
@@ -87,11 +87,50 @@ library: [go-iso8601-duration](https://github.com/xnacly/go-iso8601-duration).
 
 # Finding the Specification
 
-<!-- TODO: -->
+This is the part where I was severly pissed off. First of all, I understand why
+the go stdlib only supports a
+[ISO8601](https://www.iso.org/iso-8601-date-and-time-format.html) subset,
+because: [RFC3339](https://www.rfc-editor.org/rfc/rfc3339.html) is freely
+accessible and ISO8601 is a cluster fuck of backwards compatibility and absurd
+formats. Cutting the fat down to a subset of format strings was a good
+decision. I can only recommend [RFC 3339 vs ISO 8601 vs
+HTML](https://ijmacd.github.io/rfc3339-iso8601/), the visualisation shows the
+whole scale of cursedness ISO8601 and HTML bring to the world. Also,
+technically RFC3339 defines ISO8601 durations while not going into further
+detail on them anywhere, see [RFC3339 - Appendix A. ISO 8601 Collected
+ABNF](https://www.rfc-editor.org/rfc/rfc3339.html#page-12).
 
-- why 200CHF
-- why no older versions open
-- why does the eu and germany pay for iso but the specs arent accessible
+Germany (the country I am from and pay taxes to), contributes 7.6% of the OECD
+budget per anno, applying this to membership fees of [ISO's financial
+performance](https://www.iso.org/annual-reports/2023) in 2023:
+
+| Operating revenue                                     | 2023   |
+| ----------------------------------------------------- | ------ |
+| Membership fees                                       | 21 359 |
+| Royalties received from members selling ISO standards | 14 949 |
+| Revenue from members                                  | 36 308 |
+| Revenue – net sales                                   | 6 620  |
+| **Funded activities**                                 |        |
+| Funds to support Capacity Building activities         | 2 620  |
+| Funds to support ISO Strategy                         | 1 800  |
+| Funded activities - revenue                           | 4 420  |
+| **Total revenue**                                     | 47 348 |
+
+We get a staggering \(21359 \cdot 0.076 = 1623.284\)kCHF, which is around
+\(1,737,227.20\textrm{€}\) of taxpayers money I contribute to. As a german I
+love standards and the idea behind ISO and
+[DIN](https://en.wikipedia.org/wiki/Deutsches_Institut_f%C3%BCr_Normung)
+(Germanys ISO member body). What I don't love is my taxes going to a
+organisation that produces standards that aren't freely accessible for anyone,
+not for library implementers, not for oss contributors and not even for the tax
+payers financing said organisation. To add insult to inury, they fucking charge
+[227€](https://www.dinmedia.de/en/standard/iso-8601-2/303815655) for the
+current ISO8601 version: _ISO 8601-2:2019-02_. Even the one before that costs
+80 bucks. Anyway, I used the very good wikipedia [ISO8601 -
+Durations](https://en.wikipedia.org/wiki/ISO_8601#Durations) and found some
+public versions of the full spec ([ISO8601 - 4.4.3
+Duration](https://www.loc.gov/standards/datetime/iso-tc154-wg5_n0038_iso_wd_8601-1_2016-02-16.pdf))
+from the us library of congress of all places.
 
 # Understanding the Specification
 
@@ -118,6 +157,8 @@ type ISO8601Duration struct {
 
 ## The API
 
+A simple interaction interface:
+
 ```go
 // P[nn]Y[nn]M[nn]DT[nn]H[nn]M[nn]S or P[nn]W, as seen in
 // https://en.wikipedia.org/wiki/ISO_8601#Durations
@@ -137,7 +178,7 @@ func (i ISO8601Duration) Apply(t time.Time) time.Time {}
 func (i ISO8601Duration) Duration() time.Duration {}
 ```
 
-Putting it all together the user facing api comes out to:
+Using it as below:
 
 ```go
 package main
@@ -249,7 +290,7 @@ pull up our mathematical fsm model. Its basically a quintuple of:
    $$
    \begin{align}
        \delta(s, x) &:= S \times \Sigma  \rightarrow S \\
-       &\Leftrightarrow 
+       &\Leftrightarrow
        \begin{cases}
             P & \quad x = P, s = start \\
             T & \quad x = T, s \in \{P, Y, M, D, Designator\} \\
@@ -261,7 +302,6 @@ pull up our mathematical fsm model. Its basically a quintuple of:
        \end{cases}
    \end{align}
    $$
-
 
 5. \(F\): the final set of states:
 
@@ -275,7 +315,8 @@ pull up our mathematical fsm model. Its basically a quintuple of:
 
 ### Dealing with unexpected state transitions
 
-Since I want to provide myself very extensive error contexts I whipped up the
+Since I want to provide myself very extensive error contexts and I was
+disappointed with the usual `unexpected input` shenanigans, I whipped up the
 following error constants and the `ISO8601DurationError` for wrapping it with
 the position the error occured in:
 
@@ -351,6 +392,70 @@ to bottom and contextualize each:
 10. `NoDesignatorsAfterWeeksAllowed`: A duration including weeks (`W`) is
     exclusive to all other designators and designator values, making `P2W5D`
     and `P5D1W` invalid inputs.
+
+For instance, in the part of the state machine that handles getting a new
+character for advancing the state has several possible causes for failure, as
+lined out before:
+
+```go
+func From(s string) (ISO8601Duration, error) {
+	var duration ISO8601Duration
+
+	if len(s) == 0 {
+		return duration, wrapErr(UnexpectedEof, 0)
+	}
+
+	curState := stateStart
+	var col uint8
+
+	r := strings.NewReader(s)
+
+	for {
+		b, size, err := r.ReadRune()
+		if err != nil {
+			if err != io.EOF {
+				return duration, wrapErr(UnexpectedReaderError, col)
+			} else if curState == stateP {
+				// being in stateP at the end (io.EOF) means we havent
+				// encountered anything after the P, so there were no numbers
+				// or states
+				return duration, wrapErr(UnexpectedEof, col)
+			} else if curState == stateNumber || curState == stateTNumber {
+				// if we are in the state of Number or TNumber we had a number
+				// but no designator at the end
+				return duration, wrapErr(MissingDesignator, col)
+			} else {
+				curState = stateFin
+			}
+		}
+		if size > 1 {
+			return duration, wrapErr(UnexpectedNonAsciiRune, col)
+		}
+		col++
+
+        // ...
+	}
+}
+```
+
+Another case for failure is of course the `start->P` transition, which is
+mandatory for any valid input:
+
+```go
+func From(s string) (ISO8601Duration, error) {
+    // ...
+	for {
+        // ...
+		switch curState {
+		case stateStart:
+			if b != 'P' {
+				return duration, wrapErr(MissingPDesignatorAtStart, col)
+			}
+			curState = stateP
+        // ...
+	}
+}
+```
 
 ### Parsing numbers
 
@@ -737,6 +842,123 @@ Since most of my critisism of the existing libraries were either no spec
 compliance and or accepting weird inputs I made sure to do extensive testing
 before publishing the library.
 
+### Edgecases
+
+Some of these are inputs I tried throwing at other libraries to test their
+compliance and how in depth their error messages are.
+
+```go
+// TestDurationErr makes sure all expected edgecases are implemented correctly
+func TestDurationErr(t *testing.T) {
+	cases := []string{
+		"",        // UnexpectedEof
+		"P",       // UnexpectedEof
+		"è",       // UnexpectedNonAsciiRune
+		"P1",      // MissingDesignator
+		"P1A",     // UnknownDesignator
+		"P12D12D", // DuplicateDesignator
+		"P1YD",    // MissingNumber
+		"P111Y",   // TooManyNumbersForDesignator
+		"Z",       // MissingPDesignatorAtStart
+		"P15W2D",  // NoDesignatorsAfterWeeksAllowed
+	}
+
+	for _, i := range cases {
+		t.Run(i, func(t *testing.T) {
+			_, err := From(i)
+			if assert.Error(t, err) {
+				fmt.Println(err)
+			}
+		})
+	}
+}
+```
+
+{{<shellout>}}
+$ go test ./... -v
+%SEPARATOR%
+=== RUN TestDurationErr
+=== RUN TestDurationErr/#00
+ISO8601DurationError: Unexpected EOF in duration format string, at col: 0
+=== RUN TestDurationErr/P
+ISO8601DurationError: Unexpected EOF in duration format string, at col: 1
+=== RUN TestDurationErr/è
+ISO8601DurationError: Unexpected non ascii component in duration format string, at col: 0
+=== RUN TestDurationErr/P1
+ISO8601DurationError: Missing unit designator, at col: 2
+=== RUN TestDurationErr/P1A
+ISO8601DurationError: Unknown designator, expected YMWD or after a T, HMS, at col: 3
+=== RUN TestDurationErr/P12D12D
+ISO8601DurationError: Duplicate designator, at col: 7
+=== RUN TestDurationErr/P1YD
+ISO8601DurationError: Missing number specifier before unit designator, at col: 4
+=== RUN TestDurationErr/P111Y
+ISO8601DurationError: Only 2 numbers before any designator allowed, at col: 4
+=== RUN TestDurationErr/Z
+ISO8601DurationError: Missing [P] designator at the start of the duration format string, at col: 1
+=== RUN TestDurationErr/P15W2D
+ISO8601DurationError: After [W] designator, no other numbers and designators are allowed, at col: 4
+{{</shellout>}}
+
 ### Happy paths
 
-### Edgecases
+Each testcase crafted so I hit all branches and possibilites the spec defines.
+
+```go
+var testcases = []struct {
+	str string
+	dur ISO8601Duration
+}{
+	{"P0D", ISO8601Duration{}},
+	{"PT15H", ISO8601Duration{hour: 15}},
+	{"P1W", ISO8601Duration{week: 1}},
+	{"P15W", ISO8601Duration{week: 15}},
+	{"P15Y", ISO8601Duration{year: 15}},
+	{"P15Y3M", ISO8601Duration{year: 15, month: 3}},
+	{"P15Y3M41D", ISO8601Duration{year: 15, month: 3, day: 41}},
+	{"PT15M", ISO8601Duration{minute: 15}},
+	{"PT15M10S", ISO8601Duration{minute: 15, second: 10}},
+	{
+		"P3Y6M4DT12H30M5S",
+		ISO8601Duration{
+			year:   3,
+			month:  6,
+			day:    4,
+			hour:   12,
+			minute: 30,
+			second: 5,
+		},
+	},
+}
+
+func TestDurationStringer(t *testing.T) {
+	for _, i := range testcases {
+		t.Run(i.str, func(t *testing.T) {
+			stringified := i.dur.String()
+			assert.Equal(t, i.str, stringified)
+		})
+	}
+}
+
+func TestDuration(t *testing.T) {
+	for _, i := range testcases {
+		t.Run(i.str, func(t *testing.T) {
+			parsed, err := From(i.str)
+			assert.NoError(t, err)
+			assert.Equal(t, i.dur, parsed)
+		})
+	}
+}
+
+func TestBiliteral(t *testing.T) {
+	for _, i := range testcases {
+		t.Run(i.str, func(t *testing.T) {
+			parsed, err := From(i.str)
+			assert.NoError(t, err)
+			assert.Equal(t, i.dur, parsed)
+			stringified := parsed.String()
+			assert.Equal(t, i.str, stringified)
+		})
+	}
+}
+```
