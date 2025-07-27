@@ -1,8 +1,7 @@
 ---
-title: "Handrolling ISO8601 Support for Go"
+title: "Handrolling ISO8601 Duration Support for Go"
 summary: "So I need to use ISO8601 durations which Go doesn't support"
-date: 2025-07-21
-draft: true
+date: 2025-07-27
 math: true
 tags:
   - go
@@ -129,18 +128,66 @@ current ISO8601 version: _ISO 8601-2:2019-02_. Even the one before that costs
 80 bucks. Anyway, I used the very good wikipedia [ISO8601 -
 Durations](https://en.wikipedia.org/wiki/ISO_8601#Durations) and found some
 public versions of the full spec ([ISO8601 - 4.4.3
-Duration](https://www.loc.gov/standards/datetime/iso-tc154-wg5_n0038_iso_wd_8601-1_2016-02-16.pdf))
-from the us library of congress of all places.
+Duration](https://www.loc.gov/standards/datetime/iso-tc154-wg5_n0038_iso_wd_8601-1_2016-02-16.pdf)),
+out of all places, from the us library of congress .
 
 # Understanding the Specification
 
-<!-- TODO: -->
+_4.4.1 Separators and designators_ requires: "_[...] P shall precede [...] the
+remainder of the [...] duration_".
 
-- what is a designator
-- what is a number
-- why P
-- why does T toggle time mode
-- why is W exclusive?
+_4.4.3.1 General_ defines a Duration as "_[...] a combination of components
+with accurate duration (hour, minute and second) and components with nominal
+duration (year, month, week and day)._". A component is made up of a variable
+amount of numeric characters and a designator.
+
+_4.4.3.2 Format with designators_ defines this further: "_The number of years
+shall be followed by [...] Y_", "_the number of months by M_", "_the number of
+weeks by W_", "_and the number of days by D_". "_[...] [the] time components
+shall be preceded by [...] T_". It also defines "_[...] number of hours [...]
+by H_", "_[...] minutes by M_" and "_[...] seconds by S_".
+
+Furthermore "_[...] both basic and extended format [...] shall be PnnW or
+PnnYnnMnnDTnnHnnMnnS_". The count of numeric characters (_nn_) before a
+designator is somehow agreed upon by the members of the information exchange,
+so even something absurd like 256 would be valid, who even thought that would
+be smart? There are also some exceptions to the before:
+
+1. "_[...] components may be omitted [...]_"
+2. "_if necessary for a particular application, the lowest order components may
+   have a decimal fraction_" (I skipped this one, because I don't think this is
+   a good feature, but I'm open to adding this in the future, if necessary)
+3. "_[...][if no other component is present] at least one number and its
+   designator shall be present_"
+4. "_[...] T shall be absent if all time components are absent_"
+
+## Summary
+
+1. A duration format string must start with a `P` for period
+2. There are the following designators for the date component:
+   - Y: year
+   - M: month
+   - D: day
+3. There are the following designators for the time component:
+   - H: hour
+   - M: minute
+   - S: second
+4. Each designator needs a number and each number needs a designator
+5. Pairs can be omitted, if empty
+6. The time component must start with `T`, but can be omitted if no time
+   designators are found
+7. Using `W` is exclusive to all other designators
+8. There always needs to be at least one designator and number pair
+
+And some examples for the above:
+
+| Example          | Pair wise               |
+| ---------------- | ----------------------- |
+| `P1Y2M3DT1H2M3S` | `P 1Y 2M 3D T 1H 2M 3S` |
+| `P1Y2M3D`        | `P 1Y 2M 3D`            |
+| `PT1H2M3S`       | `P T 1H 2M 3S`          |
+| `P56W`           | `P 56W`                 |
+| `P0D`            | `P 0D`                  |
 
 # Handrolling ISO8601 Durations
 
@@ -312,6 +359,30 @@ pull up our mathematical fsm model. Its basically a quintuple of:
 ### State transitions
 
 ![state diagram for format](/handrolling-iso8601/chart.png)
+
+### Stepping through ISO8601
+
+Lets take for instance `P25W` and step through the fsm for this example:
+
+| \(s\)        | \(x\) | \(\delta(s,x) \Rightarrow s_0\) | Input  |
+| ------------ | ----- | ------------------------------- | ------ |
+| `start`      | `P`   | `P`                             | `P25W` |
+| `P`          | `2`   | `Number`                        | `25W`  |
+| `Number`     | `5`   | `Number`                        | `5W`   |
+| `Number`     | `W`   | `Designator`                    | `W`    |
+| `Designator` | `EOF` | `fin`                           | ` `    |
+
+The same applies for formats including time components, like `PT2M3S`
+
+| \(s\)         | \(x\) | \(\delta(s,x) \Rightarrow s_0\) | Input    |
+| ------------- | ----- | ------------------------------- | -------- |
+| `start`       | `P`   | `P`                             | `PT2M3S` |
+| `P`           | `T`   | `T`                             | `T2M3S`  |
+| `T`           | `2`   | `TNumber`                       | `2M3S`   |
+| `TNumber`     | `M`   | `TDesignator`                   | `M3S`    |
+| `TDesignator` | `3`   | `TNumber`                       | `3S`     |
+| `TNumber`     | `S`   | `TDesignator`                   | `S`      |
+| `TDesignator` | `EOF` | `fin`                           | ` `      |
 
 ### Dealing with unexpected state transitions
 
